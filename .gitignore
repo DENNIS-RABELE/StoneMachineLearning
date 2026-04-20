@@ -3,10 +3,7 @@
 Thumbs.db
 
 # Secrets / local env
-.env
-.env.*
-!.env.example
-!.env.docker.example
+# .env files are now committed (see .env and .env.docker.example)
 
 # Local tooling caches
 .docker-tmp/

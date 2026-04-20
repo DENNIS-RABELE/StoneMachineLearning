@@ -29,10 +29,7 @@ celerybeat-schedule-*
 *.log
 
 # Local secrets / env files
-.env
-.env.*
-!.env.example
-!.env.docker.example
+# .env files are now committed to root .gitignore
 
 # Django collected files
 staticfiles/

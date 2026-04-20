@@ -69,6 +69,10 @@ const LIVE_STREAM_INTERVAL_MS = Math.max(
   1000,
   Number(process.env.LIVE_STREAM_INTERVAL_MS || 1000),
 );
+const LATEST_RESULT_CACHE_TTL_MS = Math.max(
+  LIVE_STREAM_INTERVAL_MS,
+  Number(process.env.LIVE_LATEST_RESULT_CACHE_TTL_MS || 3000),
+);
 
 let characterColumns;
 let betOddsColumns;
@@ -76,6 +80,9 @@ let isDbReady = false;
 let isCharacterSchemaReady = false;
 let isOddsSchemaReady = false;
 let server;
+let latestRoundResultCache = null;
+let latestRoundResultFetchedAt = 0;
+let latestRoundResultPromise = null;
 const REDIS_BETS_KEY = "round:current:bets";
 const REDIS_ROUND_TIMER_KEY = "round:timer:state";
 
@@ -858,17 +865,16 @@ async function getOutcomePkByExternalIds(dbRunner, externalIds) {
 }
 
 async function ensureClientSlip(dbRunner, { playerId, gameRoundId, placedAt }) {
-  const existing = await dbRunner.query(
-    `SELECT id FROM ${CLIENT_SLIP_TABLE} WHERE player_id = $1 AND game_round = $2 LIMIT 1`,
-    [playerId, gameRoundId],
-  );
-  if (existing.rows.length) return Number(existing.rows[0].id);
   const slipId = await nextTableId(dbRunner, CLIENT_SLIP_TABLE);
-  await dbRunner.query(
-    `INSERT INTO ${CLIENT_SLIP_TABLE} (id, player_id, game_round, status, total_stake, total_possible_win, placed_at, updated_at) VALUES ($1, $2, $3, 'OPEN', 0, 0, $4, NOW())`,
+  const { rows } = await dbRunner.query(
+    `INSERT INTO ${CLIENT_SLIP_TABLE} (id, player_id, game_round, status, total_stake, total_possible_win, placed_at, updated_at)
+     VALUES ($1, $2, $3, 'OPEN', 0, 0, $4, NOW())
+     ON CONFLICT (player_id, game_round)
+     DO UPDATE SET updated_at = NOW()
+     RETURNING id`,
     [slipId, playerId, gameRoundId, placedAt],
   );
-  return slipId;
+  return Number(rows[0].id);
 }
 
 async function attachClientBetToSlip(
@@ -964,14 +970,47 @@ async function getOptionsBundleByCharacterId(characterId) {
 }
 
 async function getLatestRoundResult() {
-  const rows = await getRecentRoundResults(1);
-  if (!rows.length) return null;
-  const latest = rows[0];
-  return {
-    id: Number(latest.id),
-    drawOption: latest.result_zone,
-    createdAt: latest.created_at,
-  };
+  if (
+    latestRoundResultCache &&
+    Date.now() - latestRoundResultFetchedAt <= LATEST_RESULT_CACHE_TTL_MS
+  ) {
+    return { ...latestRoundResultCache };
+  }
+
+  if (latestRoundResultPromise) return latestRoundResultPromise;
+
+  latestRoundResultPromise = (async () => {
+    try {
+      const rows = await getRecentRoundResults(1);
+      if (!rows.length) {
+        latestRoundResultCache = null;
+        latestRoundResultFetchedAt = Date.now();
+        return null;
+      }
+      const latest = rows[0];
+      const payload = {
+        id: Number(latest.id),
+        drawOption: latest.result_zone,
+        createdAt: latest.created_at,
+      };
+      latestRoundResultCache = payload;
+      latestRoundResultFetchedAt = Date.now();
+      return { ...payload };
+    } catch (error) {
+      if (latestRoundResultCache) {
+        console.warn(
+          `[Game API] Using cached latest result after DB failure: ${error.message}`,
+        );
+        latestRoundResultFetchedAt = Date.now();
+        return { ...latestRoundResultCache };
+      }
+      throw error;
+    } finally {
+      latestRoundResultPromise = null;
+    }
+  })();
+
+  return latestRoundResultPromise;
 }
 
 function computeBetsChecksum(bets) {
@@ -986,9 +1025,38 @@ function computeBetsChecksum(bets) {
 async function buildLiveSnapshot({ characterId = null } = {}) {
   const timerState = await ensureRoundTimerState();
   const timer = buildRoundTimerSnapshot(timerState);
-  const bets = await getCurrentBets();
-  const latestResult = await getLatestRoundResult();
-  const optionsBundle = await getOptionsBundleByCharacterId(characterId);
+  const [betsResult, latestResultResult, optionsBundleResult] =
+    await Promise.allSettled([
+      getCurrentBets(),
+      getLatestRoundResult(),
+      getOptionsBundleByCharacterId(characterId),
+    ]);
+
+  if (betsResult.status === "rejected") {
+    console.warn(
+      `[Game API] Could not load live bets for snapshot: ${betsResult.reason?.message || betsResult.reason}`,
+    );
+  }
+  if (latestResultResult.status === "rejected") {
+    console.warn(
+      `[Game API] Could not load latest result for snapshot: ${latestResultResult.reason?.message || latestResultResult.reason}`,
+    );
+  }
+  if (optionsBundleResult.status === "rejected") {
+    console.warn(
+      `[Game API] Could not load options bundle for snapshot: ${optionsBundleResult.reason?.message || optionsBundleResult.reason}`,
+    );
+  }
+
+  const bets = betsResult.status === "fulfilled" ? betsResult.value : {};
+  const latestResult =
+    latestResultResult.status === "fulfilled"
+      ? latestResultResult.value
+      : latestRoundResultCache
+        ? { ...latestRoundResultCache }
+        : null;
+  const optionsBundle =
+    optionsBundleResult.status === "fulfilled" ? optionsBundleResult.value : null;
   const optionsVersion = optionsBundle?.version || "none";
   const latestResultId = latestResult?.id || 0;
   const betsChecksum = computeBetsChecksum(bets);
