@@ -1,0 +1,132 @@
+##::0
+    Python local setup
+    - Recommended: Python 3.11+ on Windows
+    - Redis: install/run Memurai
+    - Postgres: create the databases shown in `DB's.PNG`
+    - Uses repo root env file: `C:\stoney\.env`
+
+    _________________________________________________________________LOCAL RUN COMMANDS_________________________________________________________________
+
+    Main URLs (local)
+    - Admin portal UI: http://127.0.0.1:9006
+    - Client UI: http://localhost:3000
+
+    --------------------------------
+    One-time server setup
+    --------------------------------
+    cd C:\stoney
+    python -m venv .venv
+    .\.venv\Scripts\python -m pip install --upgrade pip
+    .\.venv\Scripts\python -m pip install -r serverside\microservices\requirements.txt
+
+    --------------------------------
+    Clientside (Node) - 1 process
+    --------------------------------
+    cd C:\stoney\clientside
+    npm install
+    node server.js
+
+    --------------------------------
+    Serverside - 3 web services
+    --------------------------------
+    Use a separate terminal for each service.
+    In each terminal:
+    cd stoney
+    .\.venv\Scripts\Activate.ps1
+
+    Terminal 1: admin_portal (9006)
+    cd serverside\microservices\admin_portal
+    	python manage.py migrate --noinput
+    	python manage.py runserver 127.0.0.1:9006
+
+    Terminal 2: bettor_service (9002) (includes Analytics + Betdata as apps)
+    cd serverside\microservices\bettor_service
+    	python manage.py makemigrations
+    	python manage.py migrate --noinput
+    	python manage.py migrate --noinput --database=demomoney
+    	python manage.py migrate --noinput --database=betdata
+    	python manage.py migrate --noinput --database=analytics
+    	python manage.py runserver 127.0.0.1:9002
+
+    Terminal 3: decision_service (9000) (includes Odds Generator + Unity Gameplay as apps)
+    cd serverside\microservices\decision_service
+		python manage.py makemigrations
+    	python manage.py migrate --noinput
+    	python manage.py migrate --noinput --database=odds
+    	python manage.py migrate --noinput --database=unity
+    	python -m daphne -b 127.0.0.1 -p 9000 decision_service.asgi:application
+
+    --------------------------------
+    Serverside background (Celery) for decision_service
+    --------------------------------
+
+    Terminal 4: decision_service celery worker
+	cd serverside\microservices\decision_service
+		python -m celery -A decision_service worker --pool=solo --loglevel=info
+
+	Terminal 5: decision_service celery beat
+	cd serverside\microservices\decision_service
+		python -m celery -A decision_service beat --loglevel=info
+
+    --------------------------------
+    Admin user setup
+    --------------------------------
+    cd serverside\microservices\admin_portal
+    	python manage.py createsuperuser
+
+##::1
+    Optional database reset
+    Drop all tables in the current `public` schema:
+
+    DO $$ DECLARE
+        r RECORD;
+    BEGIN
+        FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+            EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
+        END LOOP;
+    END $$;
+
+##::2
+    Docker run commands
+    New standard Docker flow:
+    [0] cd C:\stoney
+    [1] Copy-Item .env.docker.example .env
+    [2] docker compose down -v --remove-orphans
+    [3] docker compose up --build
+
+    Alternative single-host background start:
+    docker compose -f docker-compose.yml -f docker-compose.single-host.yml up --build -d
+
+    Build only one service:
+    docker compose up --build unity_gameplay_service
+
+    Create admin user in Docker:
+    docker compose exec admin_portal python manage.py createsuperuser
+
+    Moving forward:
+    docker compose up
+
+    Run in background:
+    docker compose up --build -d
+
+    Check running services:
+    docker compose ps
+
+    View logs:
+    docker compose logs -f
+
+    View logs for selected services:
+    docker compose logs -f admin_portal decision_service unity_gameplay_service client_gateway
+
+    Stop everything:
+    docker compose down
+
+    Stop and remove volumes / reset database state:
+    docker compose down -v
+
+    Main URLs after startup:
+    - Admin portal / gateway: http://localhost:9006
+    - Client gateway: http://localhost:3000
+
+    Reference:
+    See `DOCKER.md` for Docker-based run notes.

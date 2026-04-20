@@ -1,0 +1,32 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "*"
+whitenoise = "*"
+psycopg = {extras = ["binary"], version = "*"}
+redis = "*"
+celery = "*"
+djangorestframework = "*"
+drf-spectacular = "*"
+channels = {extras = ["daphne"], version = "*"}
+channels-redis = "*"
+pyjwt = "*"
+httpx = "*"
+websockets = "*"
+flask = "*"
+flask-cors = "*"
+scikit-learn = "*"
+numpy = "*"
+pandas = "*"
+scipy = "*"
+matplotlib = "*"
+seaborn = "*"
+joblib = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.14"

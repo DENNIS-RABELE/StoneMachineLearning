@@ -1,0 +1,25 @@
+{
+  "players": [
+    {
+      "playerName": "Matala",
+      "drownphase": 1
+    },
+    {
+      "playerName": "Sir",
+      "drownphase": 1
+    },
+    {
+      "playerName": "Ngaka",
+      "drownphase": 1
+    },
+    {
+      "playerName": "Ramahlale",
+      "drownphase": 1
+    }
+  ],
+  "meta": {
+    "client_round_id": 140,
+    "updated_at_ms": 1776654629639,
+    "settings_path": "C:\\stoney\\serverside\\microservices\\unity_gameplay_service\\Game2\\StreamingAssets\\Settings.json"
+  }
+}

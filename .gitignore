@@ -1,0 +1,42 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Secrets / local env
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# Local tooling caches
+.docker-tmp/
+.selenium/
+
+# Dependencies / virtual environments
+clientside/node_modules/
+node_modules/
+.venv/
+venv/
+env/
+ENV/
+
+# Python caches / artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local databases / runtime state
+*.sqlite3
+celerybeat-schedule
+celerybeat-schedule-*
+*.log
+
+# Project subtree overrides
+serverside/microservices/**/__pycache__/

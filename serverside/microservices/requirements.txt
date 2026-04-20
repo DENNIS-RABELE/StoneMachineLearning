@@ -1,0 +1,43 @@
+# Shared Python requirements for all server-side services.
+# Install once from the repo root or this folder:
+#   python -m pip install -r serverside/microservices/requirements.txt
+#
+# This file includes:
+# - direct dependencies imported by the Django/Flask services
+# - important runtime dependencies for Daphne/WebSocket support that proved
+#   fragile when left purely transitive on Windows
+
+asgiref
+autobahn
+celery
+cffi
+channels
+channels-redis
+cryptography
+Daphne
+Django
+djangorestframework
+drf-spectacular
+Flask
+flask-cors
+gunicorn
+httpx
+joblib
+matplotlib
+numpy
+pandas
+psycopg[binary]
+PyJWT
+pyOpenSSL
+python-dotenv
+PyYAML
+redis
+requests
+scikit-learn
+scipy
+seaborn
+service-identity
+Twisted
+ujson
+websockets
+whitenoise

@@ -1,0 +1,802 @@
+services:
+  - type: web
+    name: stoney-admin-portal
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: ./docker/render/admin_portal.Dockerfile
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /api/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.0
+      - key: DEBUG
+        value: "0"
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: GUNICORN_TIMEOUT
+        value: "120"
+      - key: SECRET_KEY
+        sync: false
+      - key: SSO_SECRET
+        sync: false
+      - key: SSO_COOKIE_NAME
+        value: admin_jwt
+      - key: SSO_COOKIE_SAMESITE
+        value: Lax
+      - key: SSO_COOKIE_SECURE
+        value: "1"
+      - key: USE_X_FORWARDED_HOST
+        value: "1"
+      - key: BOOTSTRAP_RENDER_DATABASES
+        value: "1"
+      - key: BOOTSTRAP_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: BOOTSTRAP_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: BOOTSTRAP_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: BOOTSTRAP_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: BOOTSTRAP_DB_NAME
+        fromDatabase:
+          name: stoney-postgres
+          property: database
+      - key: DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: DB_NAME
+        value: ADMINPORTAL
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: stoney-redis
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: .onrender.com,localhost,127.0.0.1
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://*.onrender.com
+      - key: CORS_ORIGIN
+        sync: false
+      - key: SSO_CANONICAL_HOST
+        sync: false
+      - key: DECISION_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-decision-service
+          property: hostport
+      - key: BETTOR_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-bettor-service
+          property: hostport
+
+  - type: web
+    name: stoney-bettor-service
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: ./docker/render/bettor_service.Dockerfile
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /api/
+    envVars:
+      - key: DEBUG
+        value: "0"
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: GUNICORN_TIMEOUT
+        value: "120"
+      - key: SECRET_KEY
+        sync: false
+      - key: SSO_SECRET
+        sync: false
+      - key: SSO_COOKIE_NAME
+        value: admin_jwt
+      - key: USE_X_FORWARDED_HOST
+        value: "1"
+      - key: FORCE_SCRIPT_NAME
+        value: ""
+      - key: BOOTSTRAP_RENDER_DATABASES
+        value: "1"
+      - key: BOOTSTRAP_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: BOOTSTRAP_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: BOOTSTRAP_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: BOOTSTRAP_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: BOOTSTRAP_DB_NAME
+        fromDatabase:
+          name: stoney-postgres
+          property: database
+      - key: DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: DB_NAME
+        value: BETTORS
+      - key: DEMOMONEY_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: DEMOMONEY_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: DEMOMONEY_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: DEMOMONEY_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: DEMOMONEY_DB_NAME
+        value: DEMOMONEY
+      - key: BETDATA_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: BETDATA_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: BETDATA_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: BETDATA_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: BETDATA_DB_NAME
+        value: CLIENTBETDATA
+      - key: ANALYTICS_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: ANALYTICS_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: ANALYTICS_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: ANALYTICS_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: ANALYTICS_DB_NAME
+        value: BETTORANALYTICS
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: stoney-redis
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: .onrender.com,localhost,127.0.0.1
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://*.onrender.com
+      - key: CORS_ORIGIN
+        sync: false
+
+  - type: web
+    name: stoney-decision-service
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: ./docker/render/decision_service.Dockerfile
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /api/
+    envVars:
+      - key: DEBUG
+        value: "0"
+      - key: SECRET_KEY
+        sync: false
+      - key: SSO_SECRET
+        sync: false
+      - key: SSO_COOKIE_NAME
+        value: admin_jwt
+      - key: USE_X_FORWARDED_HOST
+        value: "1"
+      - key: ROUND_DURATION_SECONDS
+        value: "200"
+      - key: ROUND_TICK_SECONDS
+        value: "5"
+      - key: ODDS_SYNC_SECONDS
+        value: "120"
+      - key: ODDS_SYNC_LIMIT
+        value: "5"
+      - key: LIVE_STREAM_INTERVAL_MS
+        value: "1500"
+      - key: BET_UPDATES_LIMIT
+        value: "20"
+      - key: BOOTSTRAP_RENDER_DATABASES
+        value: "1"
+      - key: BOOTSTRAP_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: BOOTSTRAP_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: BOOTSTRAP_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: BOOTSTRAP_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: BOOTSTRAP_DB_NAME
+        fromDatabase:
+          name: stoney-postgres
+          property: database
+      - key: DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: DB_NAME
+        value: DECISIONAPP
+      - key: ODDS_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: ODDS_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: ODDS_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: ODDS_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: ODDS_DB_NAME
+        value: ODDSGENERATOR
+      - key: UNITY_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: UNITY_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: UNITY_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: UNITY_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: UNITY_DB_NAME
+        value: UNITYGAMEPLAY
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: stoney-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: keyvalue
+          name: stoney-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: keyvalue
+          name: stoney-redis
+          property: connectionString
+      - key: ALLOWED_HOSTS
+        value: .onrender.com,localhost,127.0.0.1
+      - key: CSRF_TRUSTED_ORIGINS
+        value: https://*.onrender.com
+      - key: CORS_ORIGIN
+        sync: false
+      - key: GATEWAY_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-admin-portal
+          property: hostport
+      - key: ADMIN_PORTAL_GATEWAY_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-admin-portal
+          property: hostport
+      - key: DECISION_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-decision-service
+          property: hostport
+
+  - type: worker
+    name: stoney-decision-worker
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: ./docker/render/decision_service.Dockerfile
+    dockerCommand: sh /app/docker/render/start_decision_worker.sh
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: DEBUG
+        value: "0"
+      - key: SECRET_KEY
+        sync: false
+      - key: SSO_SECRET
+        sync: false
+      - key: SSO_COOKIE_NAME
+        value: admin_jwt
+      - key: ROUND_DURATION_SECONDS
+        value: "200"
+      - key: BOOTSTRAP_RENDER_DATABASES
+        value: "1"
+      - key: BOOTSTRAP_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: BOOTSTRAP_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: BOOTSTRAP_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: BOOTSTRAP_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: BOOTSTRAP_DB_NAME
+        fromDatabase:
+          name: stoney-postgres
+          property: database
+      - key: DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: DB_NAME
+        value: DECISIONAPP
+      - key: ODDS_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: ODDS_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: ODDS_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: ODDS_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: ODDS_DB_NAME
+        value: ODDSGENERATOR
+      - key: UNITY_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: UNITY_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: UNITY_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: UNITY_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: UNITY_DB_NAME
+        value: UNITYGAMEPLAY
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: stoney-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: keyvalue
+          name: stoney-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: keyvalue
+          name: stoney-redis
+          property: connectionString
+      - key: GATEWAY_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-admin-portal
+          property: hostport
+      - key: ADMIN_PORTAL_GATEWAY_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-admin-portal
+          property: hostport
+      - key: DECISION_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-decision-service
+          property: hostport
+
+  - type: worker
+    name: stoney-decision-beat
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: ./docker/render/decision_service.Dockerfile
+    dockerCommand: sh /app/docker/render/start_decision_beat.sh
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: DEBUG
+        value: "0"
+      - key: SECRET_KEY
+        sync: false
+      - key: SSO_SECRET
+        sync: false
+      - key: SSO_COOKIE_NAME
+        value: admin_jwt
+      - key: ROUND_DURATION_SECONDS
+        value: "200"
+      - key: BOOTSTRAP_RENDER_DATABASES
+        value: "1"
+      - key: BOOTSTRAP_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: BOOTSTRAP_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: BOOTSTRAP_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: BOOTSTRAP_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: BOOTSTRAP_DB_NAME
+        fromDatabase:
+          name: stoney-postgres
+          property: database
+      - key: DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: DB_NAME
+        value: DECISIONAPP
+      - key: ODDS_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: ODDS_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: ODDS_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: ODDS_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: ODDS_DB_NAME
+        value: ODDSGENERATOR
+      - key: UNITY_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: UNITY_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: UNITY_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: UNITY_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: UNITY_DB_NAME
+        value: UNITYGAMEPLAY
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: stoney-redis
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: keyvalue
+          name: stoney-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: keyvalue
+          name: stoney-redis
+          property: connectionString
+      - key: GATEWAY_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-admin-portal
+          property: hostport
+      - key: ADMIN_PORTAL_GATEWAY_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-admin-portal
+          property: hostport
+      - key: DECISION_SERVICE_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-decision-service
+          property: hostport
+
+  - type: web
+    name: stoney-client-gateway
+    runtime: docker
+    dockerContext: .
+    dockerfilePath: ./docker/render/client_gateway.Dockerfile
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: CORS_ORIGIN
+        sync: false
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: stoney-redis
+          property: connectionString
+      - key: DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: DB_NAME
+        value: DECISIONAPP
+      - key: BETS_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: BETS_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: BETS_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: BETS_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: BETS_DB_NAME
+        value: CLIENTBETDATA
+      - key: BETTING_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: BETTING_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: BETTING_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: BETTING_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: BETTING_DB_NAME
+        value: CLIENTBETDATA
+      - key: AUTH_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: AUTH_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: AUTH_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: AUTH_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: AUTH_DB_NAME
+        value: BETTORS
+      - key: ODDS_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: ODDS_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: ODDS_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: ODDS_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: ODDS_DB_NAME
+        value: ODDSGENERATOR
+      - key: DEMO_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: DEMO_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: DEMO_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: DEMO_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: DEMO_DB_NAME
+        value: DEMOMONEY
+      - key: DECISION_DB_HOST
+        fromDatabase:
+          name: stoney-postgres
+          property: host
+      - key: DECISION_DB_PORT
+        fromDatabase:
+          name: stoney-postgres
+          property: port
+      - key: DECISION_DB_USER
+        fromDatabase:
+          name: stoney-postgres
+          property: user
+      - key: DECISION_DB_PASSWORD
+        fromDatabase:
+          name: stoney-postgres
+          property: password
+      - key: DECISION_DB_NAME
+        value: DECISIONAPP
+      - key: CLIENT_GATEWAY_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-client-gateway
+          property: hostport
+      - key: CLIENT_GATEWAY_PUBLIC_URL
+        sync: false
+      - key: GATEWAY_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-admin-portal
+          property: hostport
+      - key: ADMIN_PORTAL_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-admin-portal
+          property: hostport
+      - key: UNITY_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-decision-service
+          property: hostport
+      - key: ODDS_GENERATOR_SYNC_HOSTPORT
+        fromService:
+          type: web
+          name: stoney-decision-service
+          property: hostport
+
+databases:
+  - name: stoney-postgres
+    plan: starter
+    ipAllowList: []
+
+keyvalue:
+  - name: stoney-redis
+    plan: starter
+    ipAllowList: []

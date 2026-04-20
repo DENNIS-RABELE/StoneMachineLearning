@@ -1,0 +1,31 @@
+html, body { padding: 0; margin: 0; width: 100%; height: 100% }
+body { overflow: hidden; background: #000 }
+
+/* Fullscreen "cover" layout: canvas is centered and can overflow to avoid bars. */
+#unity-container {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
+}
+
+#unity-canvas {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: #000;
+  outline: none;
+}
+
+#unity-loading-bar { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: none }
+#unity-logo { width: 154px; height: 130px; background: url('unity-logo-dark.png') no-repeat center }
+#unity-progress-bar-empty { width: 141px; height: 18px; margin-top: 10px; margin-left: 6.5px; background: url('progress-bar-empty-dark.png') no-repeat center }
+#unity-progress-bar-full { width: 0%; height: 18px; margin-top: 10px; background: url('progress-bar-full-dark.png') no-repeat center }
+
+/* Remove template footer UI (Unity logo, build title, fullscreen button). */
+#unity-footer,
+#unity-logo-title-footer,
+#unity-build-title,
+#unity-fullscreen-button { display: none !important }
+#unity-warning { position: absolute; left: 50%; top: 5%; transform: translate(-50%); background: white; padding: 10px; display: none }

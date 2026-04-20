@@ -1,0 +1,4 @@
+{
+  "saveUrl": "http://localhost:5000/save",
+  "loadUrl": "http://localhost:5000/load"
+}

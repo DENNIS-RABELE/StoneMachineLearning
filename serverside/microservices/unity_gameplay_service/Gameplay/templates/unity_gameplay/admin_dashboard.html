@@ -1,0 +1,106 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Unity Gameplay Dashboard{% endblock %}
+
+{% block content %}
+  <style>
+    .unity-panel {
+      border: 1px solid #ddd;
+      padding: 16px;
+      border-radius: 8px;
+      max-width: 820px;
+      background: #fff;
+      margin-bottom: 16px;
+    }
+    .unity-row {
+      margin: 8px 0;
+    }
+    .unity-controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .unity-frame {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      background: #000;
+    }
+    .unity-frame-placeholder {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      background: #000;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+
+  <div class="unity-panel">
+    <div class="unity-row"><strong>Status:</strong> <span id="gameplay-status">{{ state.status }}</span></div>
+    <div class="unity-row"><strong>Tick:</strong> <span id="gameplay-tick">{{ state.tick }}</span> / <span id="gameplay-max-ticks">{{ state.max_ticks }}</span></div>
+    <div class="unity-row"><strong>Started:</strong> <span id="gameplay-started">{{ state.started_at }}</span></div>
+    <div class="unity-row"><strong>Stopped:</strong> <span id="gameplay-stopped">{{ state.stopped_at }}</span></div>
+    <form class="unity-row unity-controls-row" method="post" action="{{ control_url }}">
+      {% csrf_token %}
+      <button type="submit" class="default" name="action" value="start" id="start-btn">Start</button>
+      <button type="submit" name="action" value="stop" id="stop-btn">Stop</button>
+    </form>
+  </div>
+
+  {% if unity_display_enabled %}
+    <iframe class="unity-frame" src="{{ unity_embed_route }}"></iframe>
+  {% elif unity_embed_enabled %}
+    <div class="unity-frame-placeholder">Gameplay is stopped globally.</div>
+  {% else %}
+    <div class="unity-panel">Unity build URL not configured.</div>
+  {% endif %}
+
+  <script>
+    const wsUrl = '{{ gameplay_ws_url }}';
+    const statusEl = document.getElementById('gameplay-status');
+    const tickEl = document.getElementById('gameplay-tick');
+    const maxTicksEl = document.getElementById('gameplay-max-ticks');
+    const startedEl = document.getElementById('gameplay-started');
+    const stoppedEl = document.getElementById('gameplay-stopped');
+    const startBtn = document.getElementById('start-btn');
+    const stopBtn = document.getElementById('stop-btn');
+
+    function connectWebSocket() {
+      const ws = new WebSocket(wsUrl.replace('http', 'ws'));
+
+      ws.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        if (data.status) {
+          statusEl.textContent = data.status;
+          tickEl.textContent = data.tick;
+          maxTicksEl.textContent = data.max_ticks;
+          startedEl.textContent = data.started_at || '';
+          stoppedEl.textContent = data.stopped_at || '';
+          
+          // Update button states
+          if (data.status === 'RUNNING') {
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+          } else {
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+          }
+        }
+      };
+
+      ws.onclose = function() {
+        setTimeout(connectWebSocket, 1000);
+      };
+
+      ws.onerror = function() {
+        ws.close();
+      };
+    }
+
+    connectWebSocket();
+  </script>
+{% endblock %}

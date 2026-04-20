@@ -1,0 +1,26 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+<div id="content-main">
+  <h1>{% trans "Central Admin" %}</h1>
+  <p>{% trans "Use the links below to manage each microservice." %}</p>
+  <p><a href="/sso/token/">{% trans "Refresh SSO Token" %}</a></p>
+
+  <div class="app-decision module">
+    <table>
+      <caption>{% trans "Decision Service" %}</caption>
+      <tr><th scope="row"><a href="/admin/decision/admin/">{% trans "Open Admin" %}</a></th></tr>
+    </table>
+  </div>
+
+  <div class="app-bettor module">
+    <table>
+      <caption>{% trans "Bettor Service" %}</caption>
+      <tr><th scope="row"><a href="/admin/bettor/admin/">{% trans "Open Admin" %}</a></th></tr>
+    </table>
+  </div>
+</div>
+
+{{ block.super }}
+{% endblock %}

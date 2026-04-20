@@ -1,0 +1,48 @@
+services:
+  postgres:
+    extends:
+      file: ./docker-compose.yml
+      service: postgres
+
+  redis:
+    extends:
+      file: ./docker-compose.yml
+      service: redis
+
+  admin_portal:
+    extends:
+      file: ./docker-compose.yml
+      service: admin_portal
+    environment:
+      WEB_CONCURRENCY: 1
+
+  bettor_service:
+    extends:
+      file: ./docker-compose.yml
+      service: bettor_service
+    environment:
+      WEB_CONCURRENCY: 1
+
+  decision_service:
+    extends:
+      file: ./docker-compose.yml
+      service: decision_service
+
+  decision_worker:
+    extends:
+      file: ./docker-compose.yml
+      service: decision_worker
+
+  decision_beat:
+    extends:
+      file: ./docker-compose.yml
+      service: decision_beat
+
+  client_gateway:
+    extends:
+      file: ./docker-compose.yml
+      service: client_gateway
+
+volumes:
+  postgres-data:
+  redis-data:

@@ -1,0 +1,26 @@
+services:
+  postgres:
+    mem_limit: 768m
+
+  redis:
+    mem_limit: 256m
+
+  admin_portal:
+    mem_limit: 384m
+
+  bettor_service:
+    mem_limit: 384m
+
+  decision_service:
+    mem_limit: 768m
+
+  decision_worker:
+    mem_limit: 512m
+
+  decision_beat:
+    mem_limit: 384m
+
+  client_gateway:
+    environment:
+      NODE_OPTIONS: --max-old-space-size=256
+    mem_limit: 512m

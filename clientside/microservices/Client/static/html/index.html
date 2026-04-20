@@ -1,0 +1,231 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Stone Odds</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="/clientside/static/css/style.css" />
+  </head>
+
+  <body>
+    <!-- Background animation -->
+    <div class="bg-animation">
+      <div class="bg-circle"></div>
+      <div class="bg-circle"></div>
+      <div class="bg-circle"></div>
+    </div>
+
+    <header>
+      <div class="logo" onclick="navigateToHome()">
+        <img
+          src="/clientside/static/images/logo-vector.png"
+          alt="Stone Odds Logo"
+        />
+        <span>STONE ODDS</span>
+      </div>
+
+      <nav>
+        <ul>
+          <li>
+            <a
+              href="#home"
+              onclick="navigateToHome()"
+              id="nav-home"
+              class="active"
+            >
+              Home
+            </a>
+          </li>
+
+          <li>
+            <a
+              href="#dashboard"
+              onclick="navigateToDashboard()"
+              id="nav-dashboard"
+            >
+              Dashboard
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </header>
+
+    <!-- MAIN CONTENT -->
+
+    <div class="main-content" id="mainContent">
+      <div class="hero" id="home">
+        <div class="hero-auth-buttons">
+          <button class="auth-btn" onclick="showLogin()">Login</button>
+          <button class="auth-btn signup-btn" onclick="showRegister()">
+            Sign Up
+          </button>
+        </div>
+
+        <h1>Experience the Thrill of Smart Betting</h1>
+
+        <p>
+          Join thousands of players on Stone Odds – where strategy meets
+          excitement. Get your welcome bonus and start your winning journey
+          today!
+        </p>
+
+        <div class="features">
+          <div class="feature">
+            <i class="fas fa-shield-alt"></i>
+            <h3>Secure & Safe</h3>
+            <p>Bank-level security with SSL encryption</p>
+          </div>
+
+          <div class="feature">
+            <i class="fas fa-bolt"></i>
+            <h3>Instant Withdrawals</h3>
+            <p>Get your winnings in under 5 minutes</p>
+          </div>
+
+          <div class="feature">
+            <i class="fas fa-gift"></i>
+            <h3>Welcome Bonus</h3>
+            <p>Up to M20 bonus on first deposit</p>
+          </div>
+
+          <div class="feature">
+            <i class="fas fa-headset"></i>
+            <h3>24/7 Support</h3>
+            <p>Our team is always ready to help</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="message" class="message"></div>
+    </div>
+
+    <!-- EMAIL VERIFICATION PAGE -->
+
+    <div id="verificationPage" class="verification-page" style="display: none">
+      <div class="verification-container">
+        <button
+          type="button"
+          class="verification-close-btn"
+          aria-label="Close verification page"
+          onclick="closeVerificationPage()"
+        >
+          <i class="fas fa-xmark"></i>
+        </button>
+        <div class="verification-icon">
+          <i class="fas fa-mail-bulk"></i>
+        </div>
+
+        <h2>Verify Your Email</h2>
+
+        <p>We've sent a 6-digit verification code to your email.</p>
+
+        <div class="code-inputs">
+          <input
+            type="text"
+            class="code-input"
+            maxlength="1"
+            inputmode="numeric"
+            oninput="moveToNext(this, 1)"
+          />
+          <input
+            type="text"
+            class="code-input"
+            maxlength="1"
+            inputmode="numeric"
+            oninput="moveToNext(this, 2)"
+          />
+          <input
+            type="text"
+            class="code-input"
+            maxlength="1"
+            inputmode="numeric"
+            oninput="moveToNext(this, 3)"
+          />
+          <input
+            type="text"
+            class="code-input"
+            maxlength="1"
+            inputmode="numeric"
+            oninput="moveToNext(this, 4)"
+          />
+          <input
+            type="text"
+            class="code-input"
+            maxlength="1"
+            inputmode="numeric"
+            oninput="moveToNext(this, 5)"
+          />
+          <input
+            type="text"
+            class="code-input"
+            maxlength="1"
+            inputmode="numeric"
+            oninput="moveToNext(this, 6)"
+          />
+        </div>
+
+        <button class="btn" onclick="verifyCode()">Verify Email</button>
+      </div>
+    </div>
+
+    <!-- DASHBOARD PAGE -->
+
+    <div id="dashboard" class="dashboard-page" style="display: none">
+      <div class="dashboard-container">
+        <div class="dashboard-icon">
+          <i class="fas fa-user-check"></i>
+        </div>
+
+        <h2>Welcome to Stone Odds!</h2>
+
+        <div class="user-card">
+          <h3>Your Account Details</h3>
+          <div id="userInfo"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>
+        © 2024 Stone Odds. All rights reserved. | 18+ Please gamble responsibly.
+      </p>
+
+      <p style="margin-top: 12px">
+        <a href="#" onclick="showTerms()">Terms of Service</a> |
+        <a href="#" onclick="showPrivacy()">Privacy Policy</a> |
+        <a href="#" onclick="showResponsibleGaming()">Responsible Gaming</a> |
+        <a href="#" onclick="showContactSupport()">Contact Support</a>
+      </p>
+    </footer>
+
+    <!-- AUTH MODAL CONTAINER (IMPORTANT) -->
+
+    <div class="auth-container">
+      <div class="auth-modal">
+        <button
+          type="button"
+          class="auth-close-btn"
+          aria-label="Close authentication form"
+          onclick="closeAuthModal()"
+        >
+          <i class="fas fa-xmark"></i>
+        </button>
+        <div id="auth-container"></div>
+      </div>
+    </div>
+
+    <script src="/clientside/static/js/main.js"></script>
+  </body>
+</html>

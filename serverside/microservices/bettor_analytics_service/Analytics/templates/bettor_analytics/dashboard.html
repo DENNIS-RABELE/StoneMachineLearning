@@ -1,0 +1,243 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Bettor Analytics Dashboard{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    :root {
+      --analytics-bg: #f4f7fb;
+      --analytics-panel: #ffffff;
+      --analytics-ink: #112437;
+      --analytics-muted: #5f7288;
+      --analytics-line: #1f78ff;
+      --analytics-up: #0a8f4f;
+      --analytics-down: #d13232;
+      --analytics-border: #d7e2ef;
+    }
+
+    .analytics-wrap {
+      width: 100%;
+      max-width: 1080px;
+      color: var(--analytics-ink);
+    }
+
+    .analytics-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      gap: 12px;
+    }
+
+    .analytics-title {
+      margin: 0;
+      font-size: 28px;
+      color: #ffffff;
+    }
+
+    .analytics-back {
+      text-decoration: none;
+      color: #fff;
+      background: #1e4f8c;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .analytics-cards {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      margin-bottom: 16px;
+    }
+
+    .analytics-card {
+      background: var(--analytics-panel);
+      border: 1px solid var(--analytics-border);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .analytics-card h2 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: var(--analytics-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .analytics-card .val {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .analytics-graph {
+      background: var(--analytics-panel);
+      border: 1px solid var(--analytics-border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .analytics-filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .analytics-filters a {
+      text-decoration: none;
+      color: #0b3361;
+      border: 1px solid #b8cbe0;
+      background: #eef5fd;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .analytics-filters a.active {
+      color: #fff;
+      border-color: #1f5ea5;
+      background: #1f5ea5;
+    }
+
+    .analytics-graph h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .analytics-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--analytics-panel);
+      border: 1px solid var(--analytics-border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .analytics-table th,
+    .analytics-table td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--analytics-border);
+      font-size: 14px;
+      text-align: left;
+    }
+
+    .analytics-table th {
+      background: #eef4fb;
+    }
+
+    .pos {
+      color: var(--analytics-up);
+      font-weight: 700;
+    }
+
+    .neg {
+      color: var(--analytics-down);
+      font-weight: 700;
+    }
+
+    .muted {
+      color: var(--analytics-muted);
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="analytics-wrap">
+    <div class="analytics-top">
+      <h1 class="analytics-title">Bettor Finance Analytics</h1>
+      <a class="analytics-back" href="/admin/">Back to Admin</a>
+    </div>
+
+    <section class="analytics-cards">
+      <article class="analytics-card">
+        <h2>Server Balance</h2>
+        <div class="val {% if final_balance >= 0 %}pos{% else %}neg{% endif %}">
+          {{ final_balance|floatformat:2 }}
+        </div>
+      </article>
+      <article class="analytics-card">
+        <h2>Total Stake</h2>
+        <div class="val">{{ total_stake|floatformat:2 }}</div>
+      </article>
+      <article class="analytics-card">
+        <h2>Total Payout</h2>
+        <div class="val">{{ total_payout|floatformat:2 }}</div>
+      </article>
+      <article class="analytics-card">
+        <h2>Stake TX / Payout TX</h2>
+        <div class="val">{{ resolved_count }} / {{ unresolved_count }}</div>
+      </article>
+    </section>
+
+    <section class="analytics-graph">
+      <h3>Daily Cumulative Balance Line Graph</h3>
+      <div class="analytics-filters">
+        {% for option in range_options %}
+          <a
+            href="?range={{ option.value }}"
+            class="{% if selected_range == option.value %}active{% endif %}"
+          >
+            {{ option.label }}
+          </a>
+        {% endfor %}
+      </div>
+      {% if chart_points %}
+        <svg viewBox="0 0 860 300" width="100%" height="300" aria-label="balance chart">
+          <rect x="0" y="0" width="860" height="300" fill="#f8fbff"></rect>
+          <polyline
+            points="{{ chart_points }}"
+            fill="none"
+            stroke="var(--analytics-line)"
+            stroke-width="3"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          ></polyline>
+        </svg>
+      {% else %}
+        <p class="muted">No settled daily finance data yet.</p>
+      {% endif %}
+    </section>
+
+    <table class="analytics-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Net Increase/Decrease</th>
+          <th>Cumulative Balance</th>
+          <th>Daily % Change</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ row.day }}</td>
+            <td class="{% if row.net_change >= 0 %}pos{% else %}neg{% endif %}">
+              {{ row.net_change|floatformat:2 }}
+            </td>
+            <td class="{% if row.cumulative_balance >= 0 %}pos{% else %}neg{% endif %}">
+              {{ row.cumulative_balance|floatformat:2 }}
+            </td>
+            <td>
+              {% if row.pct_change is None %}
+                <span class="muted">N/A</span>
+              {% else %}
+                <span class="{% if row.pct_change >= 0 %}pos{% else %}neg{% endif %}">
+                  {{ row.pct_change|floatformat:2 }}%
+                </span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" class="muted">No rows yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endblock %}

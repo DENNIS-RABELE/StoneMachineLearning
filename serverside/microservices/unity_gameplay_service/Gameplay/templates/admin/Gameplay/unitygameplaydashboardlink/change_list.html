@@ -1,0 +1,214 @@
+{% extends "admin/change_list.html" %}
+
+{% block content_title %}
+  <h1>Unity Gameplay Dashboard</h1>
+{% endblock %}
+
+{% block content %}
+  <style>
+    .unity-panel {
+      border: 1px solid #ddd;
+      padding: 16px;
+      border-radius: 8px;
+      background: #fff;
+      margin-bottom: 16px;
+      color: #1f2a33;
+    }
+    .unity-row {
+      margin: 8px 0;
+    }
+    .unity-controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+    .unity-timer-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 88px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid #d0d7de;
+      background: #f6f8fa;
+      color: #1f2328;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+    .unity-timer-chip.is-warning {
+      color: #9a6700;
+      border-color: #d4a72c;
+      background: #fff8c5;
+    }
+    .unity-timer-chip.is-danger {
+      color: #cf222e;
+      border-color: #ff8182;
+      background: #ffebe9;
+    }
+    .unity-frame {
+      width: 100%;
+      height: 520px;
+      border: 0;
+      background: #000;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .unity-frame-placeholder {
+      width: 100%;
+      height: 520px;
+      background: #000;
+      color: #fff;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+
+  <div id="content-main">
+    <div class="module">
+      <div class="unity-panel">
+        <div class="unity-row"><strong>Status:</strong> <span id="gameplayStatus">{{ state.status }}</span></div>
+        <div class="unity-row"><strong>Tick:</strong> <span id="gameplayTick">{{ state.tick }}</span> / <span id="gameplayMaxTicks">{{ state.max_ticks }}</span></div>
+        <div class="unity-row"><strong>Started:</strong> <span id="gameplayStarted">{{ state.started_at }}</span></div>
+        <div class="unity-row"><strong>Stopped:</strong> <span id="gameplayStopped">{{ state.stopped_at }}</span></div>
+        <form class="unity-row unity-controls-row" method="post" action="{{ control_url }}">
+          {% csrf_token %}
+          <button type="submit" class="default" name="action" value="start">Start</button>
+          <button type="submit" name="action" value="stop">Stop</button>
+          <span
+            id="unityRoundTimer"
+            class="unity-timer-chip"
+            data-timer-endpoint="/api/decision/api/api/round/timer/"
+            aria-live="polite"
+          >--:--</span>
+        </form>
+      </div>
+
+      {% if unity_display_enabled %}
+        <iframe class="unity-frame" src="{{ unity_embed_route }}"></iframe>
+      {% elif unity_embed_enabled %}
+        <div class="unity-frame-placeholder">Gameplay is stopped globally.</div>
+      {% else %}
+        <div class="unity-panel">Unity build URL not configured.</div>
+      {% endif %}
+    </div>
+  </div>
+  <script>
+    (function () {
+      const timerEl = document.getElementById("unityRoundTimer");
+      if (!timerEl) return;
+
+      const endpoint = timerEl.dataset.timerEndpoint;
+      let fetchHandle = null;
+
+      function formatCountdown(totalSeconds) {
+        const safe = Math.max(0, Number(totalSeconds) || 0);
+        const minutes = Math.floor(safe / 60);
+        const seconds = safe % 60;
+        return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      }
+
+      function render(secondsRemaining) {
+        timerEl.textContent = formatCountdown(secondsRemaining);
+        timerEl.classList.toggle("is-warning", secondsRemaining > 10 && secondsRemaining <= 30);
+        timerEl.classList.toggle("is-danger", secondsRemaining <= 10);
+      }
+
+      async function fetchTimer() {
+        try {
+          const response = await fetch(endpoint, {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" },
+          });
+          if (!response.ok) {
+            throw new Error(`Timer request failed (${response.status})`);
+          }
+
+          const payload = await response.json();
+          const remaining = Number(payload && payload.time_remaining);
+          if (!Number.isFinite(remaining)) {
+            render(0);
+            return;
+          }
+          render(Math.max(0, Math.floor(remaining)));
+        } catch (error) {
+          timerEl.textContent = "--:--";
+          timerEl.classList.remove("is-warning", "is-danger");
+          console.error("Could not load round timer:", error);
+        }
+      }
+
+      render(0);
+      fetchTimer();
+      fetchHandle = window.setInterval(fetchTimer, 1000);
+
+      window.addEventListener("beforeunload", function () {
+        if (fetchHandle) window.clearInterval(fetchHandle);
+      });
+    })();
+
+    // Auto-refresh gameplay state
+    (function () {
+      const statusEl = document.getElementById("gameplayStatus");
+      const tickEl = document.getElementById("gameplayTick");
+      const maxTicksEl = document.getElementById("gameplayMaxTicks");
+      const startedEl = document.getElementById("gameplayStarted");
+      const stoppedEl = document.getElementById("gameplayStopped");
+
+      if (!statusEl || !tickEl || !maxTicksEl) return;
+
+      const stateEndpoint = "/api/decision/api/gameplay/state/";
+      let stateRefreshHandle = null;
+
+      function formatDateTime(isoString) {
+        if (!isoString) return "-";
+        try {
+          const date = new Date(isoString);
+          return date.toLocaleString();
+        } catch {
+          return isoString;
+        }
+      }
+
+      async function fetchGameplayState() {
+        try {
+          const response = await fetch(stateEndpoint, {
+            credentials: "same-origin",
+            headers: { Accept: "application/json" },
+            cache: "no-store",
+          });
+          if (!response.ok) {
+            throw new Error(`State request failed (${response.status})`);
+          }
+
+          const state = await response.json();
+          if (!state || typeof state !== "object") return;
+
+          const status = String(state.status || "STOPPED").toUpperCase();
+          const tick = Number(state.tick || 0);
+          const maxTicks = Number(state.max_ticks || 0);
+          const started = state.started_at || null;
+          const stopped = state.stopped_at || null;
+
+          statusEl.textContent = status;
+          tickEl.textContent = tick;
+          maxTicksEl.textContent = maxTicks;
+          if (startedEl) startedEl.textContent = formatDateTime(started);
+          if (stoppedEl) stoppedEl.textContent = formatDateTime(stopped);
+        } catch (error) {
+          console.error("Could not load gameplay state:", error);
+        }
+      }
+
+      fetchGameplayState();
+      stateRefreshHandle = window.setInterval(fetchGameplayState, 500);
+
+      window.addEventListener("beforeunload", function () {
+        if (stateRefreshHandle) window.clearInterval(stateRefreshHandle);
+      });
+    })();
+  </script>
+{% endblock %}

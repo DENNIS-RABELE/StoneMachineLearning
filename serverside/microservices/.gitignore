@@ -1,0 +1,39 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Node / Python dependencies
+node_modules/
+.venv/
+venv/
+env/
+ENV/
+
+# Python caches / build artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Local runtime / databases
+*.sqlite3
+db.sqlite3
+celerybeat-schedule
+celerybeat-schedule-*
+*.log
+
+# Local secrets / env files
+.env
+.env.*
+!.env.example
+!.env.docker.example
+
+# Django collected files
+staticfiles/
+media/

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Power Stats Terminal</title>
+    <link rel="stylesheet" href="inner-style.css" />
+  </head>
+  <body>
+    <div class="graph-background">
+      <svg class="graph-svg" id="graphSvg"></svg>
+    </div>
+
+    <div class="game-container">
+      <div class="timer-container">
+        <div class="timer">
+          <span class="timer-text">Next: <span id="rotationTimer">18</span>s</span>
+        </div>
+        <div class="cycle-info">Cycle: <span id="globalTimer">90</span>s</div>
+      </div>
+
+      <div class="main-container">
+        <div class="card-container" id="cardContainer"></div>
+      </div>
+    </div>
+
+    <script src="/clientside/static/js/timerManager.js"></script>
+    <script src="inner-script.js"></script>
+  </body>
+</html>

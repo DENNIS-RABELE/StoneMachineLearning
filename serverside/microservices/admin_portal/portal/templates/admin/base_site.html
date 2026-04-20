@@ -1,0 +1,13 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block nav-sidebar %}
+  {{ block.super }}
+  <div class="module">
+    <h2>{% trans "Services" %}</h2>
+    <ul class="module">
+      <li><a href="/admin/decision/admin/">{% trans "Decision" %}</a></li>
+      <li><a href="/admin/bettor/admin/">{% trans "Bettor" %}</a></li>
+    </ul>
+  </div>
+{% endblock %}

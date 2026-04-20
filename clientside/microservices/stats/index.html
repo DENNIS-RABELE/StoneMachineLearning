@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Betting Platform - Main Container</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="main-title">POWER STATS TERMINAL</div>
+    
+    <div class="iframe-container">
+        <iframe srcdoc="
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset='UTF-8'>
+                <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+                <title>Power Stats Terminal</title>
+                <script src='https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js'></script>
+                <link rel='stylesheet' href='inner-style.css'>
+            </head>
+            <body>
+                <div class='graph-background'>
+                    <svg class='graph-svg' id='graphSvg'></svg>
+                </div>
+
+                <div class='game-container'>
+                    <div class='timer-container'>
+                        <div class='cycle-info'>Cycle: <span id='globalTimer'>90</span>s</div>
+                    </div>
+
+                    <div class='main-container'>
+                        <div class='card-container' id='cardContainer'></div>
+                    </div>
+                </div>
+
+                <script src='/clientside/static/js/timerManager.js'></script>
+                <script src='inner-script.js'></script>
+            </body>
+            </html>
+        "></iframe>
+    </div>
+
+    <div class="footer-note">
+        <span>|</span> 5 Characters x 18s = 90s Full Cycle <span>|</span>
+    </div>
+</body>
+</html>

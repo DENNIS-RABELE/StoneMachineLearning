@@ -1,0 +1,65 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Bettor Analytics{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    #nav-sidebar {
+      display: block !important;
+      flex: 0 0 220px;
+      width: 220px;
+    }
+
+    #main {
+      display: flex;
+      gap: 16px;
+    }
+
+    #content-start {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    #content,
+    #content.colM {
+      width: 100% !important;
+      max-width: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      position: relative;
+      z-index: 1;
+    }
+
+    .analytics-frame {
+      width: 100%;
+      height: calc(100vh - 180px);
+      border: none;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    #content-main {
+      max-width: 1200px;
+      margin-left: 0;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div id="content-main">
+    <h1>Bettor Analytics</h1>
+    <iframe
+      class="analytics-frame"
+      src="/embed/bettor/analytics/?range={{ range|urlencode }}&embed=1"
+      title="Bettor Analytics Dashboard"
+    ></iframe>
+  </div>
+  <script>
+    (function () {
+      document.body.classList.remove("sidebar-hidden");
+      document.body.classList.remove("hide-sidebar");
+    })();
+  </script>
+{% endblock %}

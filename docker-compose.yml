@@ -1,0 +1,320 @@
+name: stoney
+
+x-postgres-env: &postgres-env
+  POSTGRES_USER: ${POSTGRES_USER:-postgres}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+  POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+
+x-default-env: &default-env
+  <<: *postgres-env
+  REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+  REDIS_HOST: ${REDIS_HOST:-redis}
+  REDIS_PORT: ${REDIS_PORT:-6379}
+  DEBUG: ${DEBUG:-0}
+  WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
+  GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-120}
+  RUN_DB_MIGRATIONS: ${RUN_DB_MIGRATIONS:-1}
+  RUN_COLLECTSTATIC: ${RUN_COLLECTSTATIC:-1}
+  NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=256}
+  ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+  CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost:9006,http://127.0.0.1:9006,http://localhost:3000,http://127.0.0.1:3000}
+  USE_X_FORWARDED_HOST: ${USE_X_FORWARDED_HOST:-1}
+  SSO_SECRET: ${SSO_SECRET:-change-me}
+  SSO_COOKIE_NAME: ${SSO_COOKIE_NAME:-admin_jwt}
+  SSO_COOKIE_SAMESITE: ${SSO_COOKIE_SAMESITE:-Lax}
+  SSO_COOKIE_SECURE: ${SSO_COOKIE_SECURE:-0}
+  CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:9006,http://127.0.0.1:9006}
+  ROUND_DURATION_SECONDS: ${ROUND_DURATION_SECONDS:-200}
+  ROUND_TICK_SECONDS: ${ROUND_TICK_SECONDS:-5}
+  ODDS_SYNC_SECONDS: ${ODDS_SYNC_SECONDS:-120}
+  ODDS_SYNC_LIMIT: ${ODDS_SYNC_LIMIT:-5}
+  LIVE_STREAM_INTERVAL_MS: ${LIVE_STREAM_INTERVAL_MS:-1500}
+  BET_UPDATES_LIMIT: ${BET_UPDATES_LIMIT:-20}
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  admin_portal:
+    build:
+      context: .
+      dockerfile: docker/render/admin_portal.Dockerfile
+    command: ["sh", "/app/docker/render/start_admin_portal.sh"]
+    environment:
+      <<: *default-env
+      PORT: 9006
+      BOOTSTRAP_RENDER_DATABASES: 0
+      DB_NAME: ADMINPORTAL
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      DB_HOST: ${POSTGRES_HOST:-postgres}
+      DB_PORT: ${POSTGRES_PORT:-5432}
+      SECRET_KEY: ${ADMIN_PORTAL_SECRET_KEY:-change-me-admin-portal}
+      SSO_CANONICAL_HOST: ${SSO_CANONICAL_HOST:-}
+      DECISION_SERVICE_HOSTPORT: decision_service:9000
+      BETTOR_SERVICE_HOSTPORT: bettor_service:9002
+    ports:
+      - "9006:9006"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  bettor_service:
+    build:
+      context: .
+      dockerfile: docker/render/bettor_service.Dockerfile
+    command: ["sh", "/app/docker/render/start_bettor_service.sh"]
+    environment:
+      <<: *default-env
+      PORT: 9002
+      BOOTSTRAP_RENDER_DATABASES: 0
+      DB_NAME: BETTORS
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      DB_HOST: ${POSTGRES_HOST:-postgres}
+      DB_PORT: ${POSTGRES_PORT:-5432}
+      DEMOMONEY_DB_NAME: DEMOMONEY
+      DEMOMONEY_DB_USER: ${POSTGRES_USER:-postgres}
+      DEMOMONEY_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      DEMOMONEY_DB_HOST: ${POSTGRES_HOST:-postgres}
+      DEMOMONEY_DB_PORT: ${POSTGRES_PORT:-5432}
+      BETDATA_DB_NAME: CLIENTBETDATA
+      BETDATA_DB_USER: ${POSTGRES_USER:-postgres}
+      BETDATA_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      BETDATA_DB_HOST: ${POSTGRES_HOST:-postgres}
+      BETDATA_DB_PORT: ${POSTGRES_PORT:-5432}
+      ANALYTICS_DB_NAME: BETTORANALYTICS
+      ANALYTICS_DB_USER: ${POSTGRES_USER:-postgres}
+      ANALYTICS_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      ANALYTICS_DB_HOST: ${POSTGRES_HOST:-postgres}
+      ANALYTICS_DB_PORT: ${POSTGRES_PORT:-5432}
+      SECRET_KEY: ${BETTOR_SERVICE_SECRET_KEY:-change-me-bettor}
+    ports:
+      - "9002:9002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  decision_service:
+    build:
+      context: .
+      dockerfile: docker/render/decision_service.Dockerfile
+    command: ["sh", "/app/docker/render/start_decision_service.sh"]
+    environment:
+      <<: *default-env
+      PORT: 9000
+      BOOTSTRAP_RENDER_DATABASES: 0
+      DB_NAME: DECISIONAPP
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      DB_HOST: ${POSTGRES_HOST:-postgres}
+      DB_PORT: ${POSTGRES_PORT:-5432}
+      ODDS_DB_NAME: ODDSGENERATOR
+      ODDS_DB_USER: ${POSTGRES_USER:-postgres}
+      ODDS_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      ODDS_DB_HOST: ${POSTGRES_HOST:-postgres}
+      ODDS_DB_PORT: ${POSTGRES_PORT:-5432}
+      UNITY_DB_NAME: UNITYGAMEPLAY
+      UNITY_DB_USER: ${POSTGRES_USER:-postgres}
+      UNITY_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      UNITY_DB_HOST: ${POSTGRES_HOST:-postgres}
+      UNITY_DB_PORT: ${POSTGRES_PORT:-5432}
+      SECRET_KEY: ${DECISION_SERVICE_SECRET_KEY:-change-me-decision}
+      GATEWAY_HOSTPORT: admin_portal:9006
+      ADMIN_PORTAL_GATEWAY_HOSTPORT: admin_portal:9006
+      DECISION_SERVICE_HOSTPORT: decision_service:9000
+      CELERY_BROKER_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${REDIS_URL:-redis://redis:6379/0}
+      UNITY_GAME2_SETTINGS_PATH: /app/serverside/microservices/unity_gameplay_service/Game2/StreamingAssets/Settings.json
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./serverside/microservices/unity_gameplay_service/Game2/StreamingAssets:/app/serverside/microservices/unity_gameplay_service/Game2/StreamingAssets
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  decision_worker:
+    build:
+      context: .
+      dockerfile: docker/render/decision_service.Dockerfile
+    command: ["sh", "/app/docker/render/start_decision_worker.sh"]
+    restart: unless-stopped
+    environment:
+      <<: *default-env
+      BOOTSTRAP_RENDER_DATABASES: 0
+      RUN_DB_MIGRATIONS: 0
+      RUN_COLLECTSTATIC: 0
+      DB_NAME: DECISIONAPP
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      DB_HOST: ${POSTGRES_HOST:-postgres}
+      DB_PORT: ${POSTGRES_PORT:-5432}
+      ODDS_DB_NAME: ODDSGENERATOR
+      ODDS_DB_USER: ${POSTGRES_USER:-postgres}
+      ODDS_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      ODDS_DB_HOST: ${POSTGRES_HOST:-postgres}
+      ODDS_DB_PORT: ${POSTGRES_PORT:-5432}
+      UNITY_DB_NAME: UNITYGAMEPLAY
+      UNITY_DB_USER: ${POSTGRES_USER:-postgres}
+      UNITY_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      UNITY_DB_HOST: ${POSTGRES_HOST:-postgres}
+      UNITY_DB_PORT: ${POSTGRES_PORT:-5432}
+      SECRET_KEY: ${DECISION_SERVICE_SECRET_KEY:-change-me-decision}
+      GATEWAY_HOSTPORT: admin_portal:9006
+      ADMIN_PORTAL_GATEWAY_HOSTPORT: admin_portal:9006
+      DECISION_SERVICE_HOSTPORT: decision_service:9000
+      CELERY_BROKER_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${REDIS_URL:-redis://redis:6379/0}
+      UNITY_GAME2_SETTINGS_PATH: /app/serverside/microservices/unity_gameplay_service/Game2/StreamingAssets/Settings.json
+    volumes:
+      - ./serverside/microservices/unity_gameplay_service/Game2/StreamingAssets:/app/serverside/microservices/unity_gameplay_service/Game2/StreamingAssets
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      decision_service:
+        condition: service_started
+
+  decision_beat:
+    build:
+      context: .
+      dockerfile: docker/render/decision_service.Dockerfile
+    command: ["sh", "/app/docker/render/start_decision_beat.sh"]
+    restart: unless-stopped
+    environment:
+      <<: *default-env
+      BOOTSTRAP_RENDER_DATABASES: 0
+      RUN_DB_MIGRATIONS: 0
+      RUN_COLLECTSTATIC: 0
+      DB_NAME: DECISIONAPP
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      DB_HOST: ${POSTGRES_HOST:-postgres}
+      DB_PORT: ${POSTGRES_PORT:-5432}
+      ODDS_DB_NAME: ODDSGENERATOR
+      ODDS_DB_USER: ${POSTGRES_USER:-postgres}
+      ODDS_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      ODDS_DB_HOST: ${POSTGRES_HOST:-postgres}
+      ODDS_DB_PORT: ${POSTGRES_PORT:-5432}
+      UNITY_DB_NAME: UNITYGAMEPLAY
+      UNITY_DB_USER: ${POSTGRES_USER:-postgres}
+      UNITY_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      UNITY_DB_HOST: ${POSTGRES_HOST:-postgres}
+      UNITY_DB_PORT: ${POSTGRES_PORT:-5432}
+      SECRET_KEY: ${DECISION_SERVICE_SECRET_KEY:-change-me-decision}
+      GATEWAY_HOSTPORT: admin_portal:9006
+      ADMIN_PORTAL_GATEWAY_HOSTPORT: admin_portal:9006
+      DECISION_SERVICE_HOSTPORT: decision_service:9000
+      CELERY_BROKER_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_RESULT_BACKEND: ${REDIS_URL:-redis://redis:6379/0}
+      UNITY_GAME2_SETTINGS_PATH: /app/serverside/microservices/unity_gameplay_service/Game2/StreamingAssets/Settings.json
+    volumes:
+      - ./serverside/microservices/unity_gameplay_service/Game2/StreamingAssets:/app/serverside/microservices/unity_gameplay_service/Game2/StreamingAssets
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      decision_service:
+        condition: service_started
+
+  client_gateway:
+    build:
+      context: .
+      dockerfile: docker/render/client_gateway.Dockerfile
+    environment:
+      <<: *default-env
+      CLIENT_GATEWAY_PORT: 3000
+      CLIENT_GATEWAY_HOSTPORT: client_gateway:3000
+      CLIENT_GATEWAY_PUBLIC_URL: ${CLIENT_GATEWAY_URL:-http://localhost:3000}
+      GATEWAY_HOSTPORT: admin_portal:9006
+      ADMIN_PORTAL_HOSTPORT: admin_portal:9006
+      UNITY_HOSTPORT: decision_service:9000
+      ODDS_GENERATOR_SYNC_HOSTPORT: decision_service:9000
+      DB_NAME: DECISIONAPP
+      DB_USER: ${POSTGRES_USER:-postgres}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      DB_HOST: ${POSTGRES_HOST:-postgres}
+      DB_PORT: ${POSTGRES_PORT:-5432}
+      BETS_DB_NAME: CLIENTBETDATA
+      BETS_DB_USER: ${POSTGRES_USER:-postgres}
+      BETS_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      BETS_DB_HOST: ${POSTGRES_HOST:-postgres}
+      BETS_DB_PORT: ${POSTGRES_PORT:-5432}
+      BETTING_DB_NAME: CLIENTBETDATA
+      BETTING_DB_USER: ${POSTGRES_USER:-postgres}
+      BETTING_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      BETTING_DB_HOST: ${POSTGRES_HOST:-postgres}
+      BETTING_DB_PORT: ${POSTGRES_PORT:-5432}
+      AUTH_DB_NAME: BETTORS
+      AUTH_DB_USER: ${POSTGRES_USER:-postgres}
+      AUTH_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      AUTH_DB_HOST: ${POSTGRES_HOST:-postgres}
+      AUTH_DB_PORT: ${POSTGRES_PORT:-5432}
+      ODDS_DB_NAME: ODDSGENERATOR
+      ODDS_DB_USER: ${POSTGRES_USER:-postgres}
+      ODDS_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      ODDS_DB_HOST: ${POSTGRES_HOST:-postgres}
+      ODDS_DB_PORT: ${POSTGRES_PORT:-5432}
+      DEMO_DB_NAME: DEMOMONEY
+      DEMO_DB_USER: ${POSTGRES_USER:-postgres}
+      DEMO_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      DEMO_DB_HOST: ${POSTGRES_HOST:-postgres}
+      DEMO_DB_PORT: ${POSTGRES_PORT:-5432}
+      DECISION_DB_NAME: DECISIONAPP
+      DECISION_DB_USER: ${POSTGRES_USER:-postgres}
+      DECISION_DB_PASSWORD: ${POSTGRES_PASSWORD:-123456}
+      DECISION_DB_HOST: ${POSTGRES_HOST:-postgres}
+      DECISION_DB_PORT: ${POSTGRES_PORT:-5432}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      admin_portal:
+        condition: service_started
+      bettor_service:
+        condition: service_started
+      decision_service:
+        condition: service_started
+
+volumes:
+  postgres-data:
+  redis-data:

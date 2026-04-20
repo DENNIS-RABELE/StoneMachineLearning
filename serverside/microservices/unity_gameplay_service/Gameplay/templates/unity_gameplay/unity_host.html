@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Unity Gameplay</title>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+      }
+      .frame {
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      .empty {
+        font-family: sans-serif;
+        padding: 2rem;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    {% if unity_display_enabled %}
+      <iframe class="frame" src="./embed/" allow="autoplay; fullscreen" loading="eager"></iframe>
+    {% elif unity_embed_enabled %}
+      <div class="empty">Gameplay is stopped globally.</div>
+    {% else %}
+      <div class="empty">Unity build URL not configured.</div>
+    {% endif %}
+  </body>
+</html>
