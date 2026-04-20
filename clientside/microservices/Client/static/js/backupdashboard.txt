@@ -215,21 +215,10 @@ function updatePreloadDebugIndicator() {
   const info = window.__dashboardPreload || {};
   const remaining = Number(info.roundSecondsRemaining);
   const remainingText = Number.isFinite(remaining) ? `${remaining}s` : "n/a";
-  const requestedAt = info.preloadRequestedAt
-    ? new Date(info.preloadRequestedAt).toLocaleTimeString()
-    : "n/a";
-  const loadedAt = info.preloadLoadAt
-    ? new Date(info.preloadLoadAt).toLocaleTimeString()
-    : "n/a";
-  const readyAt = info.preloadReadyAt
-    ? new Date(info.preloadReadyAt).toLocaleTimeString()
-    : "n/a";
-  const src = String(
-    info.preloadRequestedSrc ||
-      info.preloadLoadSrc ||
-      info.preloadReadySrc ||
-      "",
-  ).slice(0, 60);
+  const requestedAt = info.preloadRequestedAt ? new Date(info.preloadRequestedAt).toLocaleTimeString() : "n/a";
+  const loadedAt = info.preloadLoadAt ? new Date(info.preloadLoadAt).toLocaleTimeString() : "n/a";
+  const readyAt = info.preloadReadyAt ? new Date(info.preloadReadyAt).toLocaleTimeString() : "n/a";
+  const src = String(info.preloadRequestedSrc || info.preloadLoadSrc || info.preloadReadySrc || "").slice(0, 60);
 
   globalGameplayState.textContent =
     `${globalGameplayState.textContent.split("\n")[0]}\n` +
@@ -241,10 +230,7 @@ function normalizeGameplaySrc(rawSrc) {
   try {
     const url = new URL(rawSrc, window.location.origin);
     if (url.origin === window.location.origin) {
-      if (
-        url.pathname === "/gameplay/embed" ||
-        url.pathname === "/gameplay/embed/"
-      ) {
+      if (url.pathname === "/gameplay/embed" || url.pathname === "/gameplay/embed/") {
         url.pathname = "/games/embed/";
       } else if (
         url.pathname === "/gameplay/embed-meta" ||
@@ -263,10 +249,7 @@ function normalizeGameplaySrc(rawSrc) {
 
 function buildGameplayFrameSrc(gameName) {
   if (!defaultGameplaySrc) return "";
-  const url = new URL(
-    normalizeGameplaySrc(defaultGameplaySrc),
-    window.location.origin,
-  );
+  const url = new URL(normalizeGameplaySrc(defaultGameplaySrc), window.location.origin);
   if (gameName) {
     url.searchParams.set("game", gameName);
   } else {
@@ -357,15 +340,9 @@ function markGameplayFrameReady(frame) {
   if (frame.id === "unityGameplayFramePreload") {
     frame.dataset.preloadReadyAt = String(Date.now());
     window.__dashboardPreload = window.__dashboardPreload || {};
-    window.__dashboardPreload.preloadReadyAt = Number(
-      frame.dataset.preloadReadyAt,
-    );
-    window.__dashboardPreload.preloadReadySrc =
-      frame.dataset.frameSrc || frame.src || "";
-    debugPreload(
-      "[Preload] preload iframe marked ready",
-      window.__dashboardPreload,
-    );
+    window.__dashboardPreload.preloadReadyAt = Number(frame.dataset.preloadReadyAt);
+    window.__dashboardPreload.preloadReadySrc = frame.dataset.frameSrc || frame.src || "";
+    debugPreload("[Preload] preload iframe marked ready", window.__dashboardPreload);
     updatePreloadDebugIndicator();
   }
   if (frame === getActiveGameplayFrame()) {
@@ -375,11 +352,8 @@ function markGameplayFrameReady(frame) {
     gamePreloadActivationPending &&
     gamePreloadActivationPending.frame === frame
   ) {
-    const {
-      frame: pendingFrame,
-      targetKey,
-      targetSrc,
-    } = gamePreloadActivationPending;
+    const { frame: pendingFrame, targetKey, targetSrc } =
+      gamePreloadActivationPending;
     gamePreloadActivationPending = null;
     setGameplayFrameActive(pendingFrame);
     currentGameplayGame = targetKey;
@@ -394,8 +368,9 @@ function trackUnityInnerFrameReady(frame, innerFrame) {
   }
 
   try {
-    const loader =
-      innerFrame.contentDocument?.getElementById("unity-loading-bar");
+    const loader = innerFrame.contentDocument?.getElementById(
+      "unity-loading-bar",
+    );
     if (!loader) {
       markGameplayFrameReady(frame);
       return;
@@ -462,14 +437,9 @@ function attachGameplayFrameReadyTracker(frame) {
     frame.dataset.lastLoadSrc = frame.src || "";
     if (frame.id === "unityGameplayFramePreload") {
       window.__dashboardPreload = window.__dashboardPreload || {};
-      window.__dashboardPreload.preloadLoadAt = Number(
-        frame.dataset.lastLoadAt,
-      );
+      window.__dashboardPreload.preloadLoadAt = Number(frame.dataset.lastLoadAt);
       window.__dashboardPreload.preloadLoadSrc = frame.dataset.lastLoadSrc;
-      debugPreload(
-        "[Preload] preload iframe load event",
-        window.__dashboardPreload,
-      );
+      debugPreload("[Preload] preload iframe load event", window.__dashboardPreload);
       updatePreloadDebugIndicator();
     }
     try {
@@ -505,29 +475,6 @@ function assignGameplayFrameSource(frame, targetKey, targetSrc) {
   frame.src = normalizedTargetSrc;
   syncGameplayFrameState(frame, targetKey, normalizedTargetSrc);
   attachGameplayFrameReadyTracker(frame);
-}
-
-function findGameplayFrame(targetKey, targetSrc) {
-  if (!targetKey || !targetSrc) return null;
-  const normalizedTargetSrc = normalizeGameplaySrc(targetSrc);
-  initGameplayFrameStack();
-  return (
-    gameplayFrames.find(
-      (frame) =>
-        frame?.dataset?.frameKey === targetKey &&
-        frame?.dataset?.frameSrc === normalizedTargetSrc,
-    ) || null
-  );
-}
-
-function activateExistingGameplayFrame(targetKey, targetSrc) {
-  const frame = findGameplayFrame(targetKey, targetSrc);
-  if (!frame) return false;
-  gamePreloadActivationPending = null;
-  setGameplayFrameActive(frame);
-  currentGameplayGame = targetKey;
-  hideGameplayCover();
-  return true;
 }
 
 function setGameplayFrameSource(targetKey, targetSrc, forceReload = false) {
@@ -581,10 +528,7 @@ function setGameplayFrameSource(targetKey, targetSrc, forceReload = false) {
 
   if (activeFrame) {
     gamePreloadActivationPending = null;
-    if (
-      activeFrameSrc === normalizedTargetSrc &&
-      currentGameplayGame === targetKey
-    ) {
+    if (activeFrameSrc === normalizedTargetSrc && currentGameplayGame === targetKey) {
       if (forceReload) {
         assignGameplayFrameSource(activeFrame, targetKey, normalizedTargetSrc);
         showGameplayCover();
@@ -621,11 +565,7 @@ function readGameplaySchedule() {
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return null;
-    if (
-      Number.isFinite(parsed.expiresAt) &&
-      parsed.expiresAt > 0 &&
-      Date.now() > parsed.expiresAt
-    ) {
+    if (Number.isFinite(parsed.expiresAt) && parsed.expiresAt > 0 && Date.now() > parsed.expiresAt) {
       try {
         window.sessionStorage.removeItem(GAMEPLAY_SCHEDULE_STORAGE_KEY);
       } catch {}
@@ -689,12 +629,11 @@ function showActiveRoundStatsWhileGameplayRuns(targetGameplaySrc) {
 function syncScheduledRoundDisplay() {
   const remaining = Math.max(0, Number(roundSecondsRemaining) || 0);
   const inStatsWindow = remaining > 0 && remaining <= STATS_WINDOW_SECONDS;
-  const runningGameplaySrc = normalizeGameplaySrc(
-    buildGameplayFrameSrc(GAMEPLAY_GAME_2),
-  );
-  const runningGameplayFrame = findGameplayFrame(
-    GAMEPLAY_GAME_2,
-    runningGameplaySrc,
+  const runningGameplaySrc = normalizeGameplaySrc(buildGameplayFrameSrc(GAMEPLAY_GAME_2));
+  const runningGameplayFrame = gameplayFrames.find(
+    (frame) =>
+      frame?.dataset?.frameKey === GAMEPLAY_GAME_2 &&
+      frame?.dataset?.frameSrc === runningGameplaySrc,
   );
 
   if (inStatsWindow) {
@@ -710,7 +649,7 @@ function syncScheduledRoundDisplay() {
 
   if (currentGameplayGame === "stats-inner") {
     if (remaining <= 0 && runningGameplayFrame) {
-      activateExistingGameplayFrame(GAMEPLAY_GAME_2, runningGameplaySrc);
+      setGameplayFrameSource(GAMEPLAY_GAME_2, runningGameplaySrc);
       return;
     }
     showDefaultGameplay();
@@ -718,9 +657,9 @@ function syncScheduledRoundDisplay() {
 }
 
 function isPerformanceViewActive() {
-  return document
-    .getElementById("view-performance")
-    ?.classList.contains("active");
+  return document.getElementById("view-performance")?.classList.contains(
+    "active",
+  );
 }
 
 function scheduleStatsAfterIntermission(delayMs) {
@@ -782,9 +721,7 @@ function beginGameplayIntermission(resumeRemaining = null) {
   renderRoundCountdown();
   const targetSrc = buildGameplayFrameSrc(GAMEPLAY_GAME_2);
   if (targetSrc) {
-    console.log(
-      `[Gameplay] Switching to preloaded game at ${roundSecondsRemaining}s`,
-    );
+    console.log(`[Gameplay] Switching to preloaded game at ${roundSecondsRemaining}s`);
     preloadGameFrame(targetSrc);
     setGameplayFrameSource(GAMEPLAY_GAME_2, targetSrc);
   }
@@ -1297,12 +1234,9 @@ function preloadGameFrame(src) {
   gamePreloadSrc = normalizedSrc;
   gamePreloadIframe.dataset.preloadRequestedAt = String(Date.now());
   window.__dashboardPreload = window.__dashboardPreload || {};
-  window.__dashboardPreload.preloadRequestedAt = Number(
-    gamePreloadIframe.dataset.preloadRequestedAt,
-  );
+  window.__dashboardPreload.preloadRequestedAt = Number(gamePreloadIframe.dataset.preloadRequestedAt);
   window.__dashboardPreload.preloadRequestedSrc = normalizedSrc;
-  window.__dashboardPreload.roundSecondsRemaining =
-    Number(roundSecondsRemaining) || 0;
+  window.__dashboardPreload.roundSecondsRemaining = Number(roundSecondsRemaining) || 0;
   console.log(`[Preload] Loading game: ${normalizedSrc}`);
   debugPreload("[Preload] request", window.__dashboardPreload);
   updatePreloadDebugIndicator();
@@ -1352,7 +1286,7 @@ function applyLiveSnapshot(snapshot) {
       });
     }
   }
-
+  
   // Do not drive countdown directly from live snapshot here.
   // Countdown should be authored by TimerManager only to avoid conflicting sources.
   if (!globalGameplayStateActive && currentGameplayGame !== "stats-inner") {
@@ -1472,10 +1406,8 @@ function applyGlobalGameplayState(state) {
       showActiveRoundStatsWhileGameplayRuns(targetSrc);
     } else {
       // Once countdown reaches 00:00, promote the already-running gameplay.
-      if (!activateExistingGameplayFrame(GAMEPLAY_GAME_2, targetSrc)) {
-        showGameplayCover();
-        showGame2(previousStatus !== "RUNNING");
-      }
+      showGameplayCover();
+      showGame2(previousStatus !== "RUNNING");
     }
   } else if (normalizedStatus === "STOPPED") {
     // When gameplay stops, fall back to the scheduled display (stats window / default).
@@ -1697,16 +1629,12 @@ async function startRoundTimer() {
     }
     if (isPreloadDebugEnabled()) {
       window.__dashboardPreload = window.__dashboardPreload || {};
-      window.__dashboardPreload.roundSecondsRemaining =
-        Number(roundSecondsRemaining) || 0;
+      window.__dashboardPreload.roundSecondsRemaining = Number(roundSecondsRemaining) || 0;
       updatePreloadDebugIndicator();
     }
 
     // Preload Unity game when approaching gameplay start time
-    if (
-      roundSecondsRemaining <= GAME_PRELOAD_THRESHOLD_SECONDS &&
-      !gamePreloadedForRound
-    ) {
+    if (roundSecondsRemaining <= GAME_PRELOAD_THRESHOLD_SECONDS && !gamePreloadedForRound) {
       gamePreloadedForRound = true;
       preloadUpcomingGameplay();
     }
@@ -3530,18 +3458,15 @@ async function loadCharacters() {
     ]);
 
     if (!currentRes.ok) {
-      console.error(
-        "Failed to load characters:",
-        currentRes.status,
-        currentData,
-      );
+      console.error("Failed to load characters:", currentRes.status, currentData);
       if (oddsBoardGrid) {
         const message =
           currentData?.error ||
           currentData?.details ||
           currentRes.statusText ||
           "Unable to load characters.";
-        oddsBoardGrid.innerHTML = `<div class="odds-empty-board">Unable to load characters. ${message}</div>`;
+        oddsBoardGrid.innerHTML =
+          `<div class="odds-empty-board">Unable to load characters. ${message}</div>`;
       }
       return;
     }
@@ -3568,7 +3493,8 @@ async function loadCharacters() {
     console.error("Could not load characters:", error);
     if (oddsBoardGrid) {
       const message = String(error?.message || error);
-      oddsBoardGrid.innerHTML = `<div class="odds-empty-board">Unable to load characters. ${message}</div>`;
+      oddsBoardGrid.innerHTML =
+        `<div class="odds-empty-board">Unable to load characters. ${message}</div>`;
     }
   }
 }
