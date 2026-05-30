@@ -9,6 +9,7 @@
 
     Main URLs (local)
     - Admin portal UI: http://127.0.0.1:9006
+    - Customer support inbox: http://127.0.0.1:9006/support/
     - Client UI: http://localhost:3000
 
     --------------------------------
@@ -33,6 +34,8 @@
     In each terminal:
     cd stoney
     .\.venv\Scripts\Activate.ps1
+    # Required on Windows for psycopg (Django PostgreSQL driver) to find libpq.dll
+    $env:Path = "C:\Program Files\PostgreSQL\18\bin;$env:Path"
 
     Terminal 1: admin_portal (9006)
     cd serverside\microservices\admin_portal
@@ -61,18 +64,28 @@
     --------------------------------
 
     Terminal 4: decision_service celery worker
-	cd serverside\microservices\decision_service
-		python -m celery -A decision_service worker --pool=solo --loglevel=info
+    cd C:\stoney
+    .\.venv\Scripts\Activate.ps1
+    $env:Path = "C:\Program Files\PostgreSQL\18\bin;$env:Path"
+    cd serverside\microservices\decision_service
+    python -m celery -A decision_service worker --pool=solo --loglevel=info
 
-	Terminal 5: decision_service celery beat
-	cd serverside\microservices\decision_service
-		python -m celery -A decision_service beat --loglevel=info
+    Terminal 5: decision_service celery beat
+    cd C:\stoney
+    .\.venv\Scripts\Activate.ps1
+    $env:Path = "C:\Program Files\PostgreSQL\18\bin;$env:Path"
+    cd serverside\microservices\decision_service
+    python -m celery -A decision_service beat --loglevel=info
 
     --------------------------------
     Admin user setup
     --------------------------------
+    cd C:\stoney
+    .\.venv\Scripts\Activate.ps1
+    $env:Path = "C:\Program Files\PostgreSQL\18\bin;$env:Path"
     cd serverside\microservices\admin_portal
-    	python manage.py createsuperuser
+    python manage.py createsuperuser
+    python manage.py create_support_superuser --username customer_support --email support@stoneodds.local
 
 ##::1
     Optional database reset
@@ -103,6 +116,9 @@
     Create admin user in Docker:
     docker compose exec admin_portal python manage.py createsuperuser
 
+    Create customer support user in Docker:
+    docker compose exec admin_portal python manage.py create_support_superuser --username customer_support --email support@stoneodds.local
+
     Moving forward:
     docker compose up
 
@@ -126,6 +142,7 @@
 
     Main URLs after startup:
     - Admin portal / gateway: http://localhost:9006
+    - Customer support inbox: http://localhost:9006/support/
     - Client gateway: http://localhost:3000
 
     Reference:

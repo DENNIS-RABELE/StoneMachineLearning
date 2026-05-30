@@ -28,7 +28,7 @@ const pool = new Pool({
   host: process.env.DB_HOST || "localhost",
   database: process.env.DB_NAME || "DECISIONAPP",
   password:
-    process.env.DB_PASS || process.env.DB_PASSWORD || process.env.DB_PASS || "123456",
+    process.env.DB_PASS || process.env.DB_PASSWORD || process.env.DB_PASS || "Software",
   port: Number(process.env.DB_PORT || 5432),
 });
 

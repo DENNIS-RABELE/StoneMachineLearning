@@ -1,0 +1,34 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Customer Support Login" %}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+  <h1>{% trans "Customer Support Login" %}</h1>
+  <p>{% trans "Use the dedicated customer-support Django superuser account." %}</p>
+  {% if signed_in_user %}
+    <p>{% blocktrans %}You are currently signed in as {{ signed_in_user }}. Enter the customer support account below to switch sessions.{% endblocktrans %}</p>
+  {% endif %}
+  {% if support_error %}
+    <p class="errornote">{{ support_error }}</p>
+  {% endif %}
+  <div class="module" style="max-width:420px;padding:16px;">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="form-row">
+        <label for="support-username">{% trans "Username" %}</label>
+        <input id="support-username" type="text" name="username" required>
+      </div>
+      <div class="form-row">
+        <label for="support-password">{% trans "Password" %}</label>
+        <input id="support-password" type="password" name="password" required>
+      </div>
+      <div class="submit-row">
+        <input type="submit" value="{% trans 'Log in' %}">
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

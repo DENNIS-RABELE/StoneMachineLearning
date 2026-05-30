@@ -198,6 +198,87 @@ body {
   font-size: 13px;
 }
 
+.support-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.support-form,
+.support-thread-card {
+  border: 1px solid rgba(0, 212, 255, 0.18);
+  border-radius: 10px;
+  background: rgba(11, 16, 32, 0.72);
+  padding: 14px;
+}
+
+.support-form {
+  display: grid;
+  gap: 12px;
+}
+
+.support-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.support-form input,
+.support-form select,
+.support-form textarea {
+  width: 100%;
+  border: 1px solid rgba(0, 212, 255, 0.24);
+  border-radius: 8px;
+  background: rgba(2, 8, 23, 0.86);
+  color: var(--text-main);
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.support-form textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.support-status {
+  min-height: 18px;
+  color: #d4e9f7;
+  font-size: 13px;
+}
+
+.support-thread-list {
+  display: grid;
+  gap: 12px;
+}
+
+.support-thread-card h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+
+.support-thread-meta,
+.support-thread-card time {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.support-message,
+.support-response {
+  margin-top: 10px;
+  border-radius: 8px;
+  padding: 10px;
+  line-height: 1.45;
+}
+
+.support-message {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.support-response {
+  border: 1px solid rgba(34, 197, 94, 0.25);
+  background: rgba(34, 197, 94, 0.1);
+}
+
 .main-view {
   padding: 0.5em;
   display: grid;

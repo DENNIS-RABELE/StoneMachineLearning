@@ -1,0 +1,1537 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Betting Activity Reports{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    html,
+    body {
+      overflow-x: hidden;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --report-bg: #f5f7fa;
+      --report-panel: #ffffff;
+      --report-ink: #162230;
+      --report-muted: #637083;
+      --report-line: #d8e0ea;
+      --report-accent: #1167b1;
+      --report-accent-2: #138a55;
+      --report-accent-3: #d69f00;
+      --report-accent-4: #e76f51;
+    }
+
+    #nav-sidebar,
+    .toggle-nav-sidebar {
+      display: none !important;
+    }
+
+    #main,
+    #content-start {
+      display: block !important;
+      margin-left: 0 !important;
+      max-width: none !important;
+      min-width: 0 !important;
+    }
+
+    body {
+      background: var(--report-bg);
+    }
+
+    #content,
+    #content.colM {
+      width: 100%;
+      max-width: none;
+      min-width: 0;
+      overflow-x: hidden;
+    }
+
+    .report-wrap {
+      width: min(100%, 1320px);
+      min-width: 0;
+      max-width: 1320px;
+      padding: 0 8px 24px;
+      color: var(--report-ink);
+    }
+
+    .report-hero {
+      padding: 24px 24px 20px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0f4c81 0%, #1167b1 58%, #138a55 100%);
+      color: #fff;
+      margin-bottom: 16px;
+    }
+
+    .report-hero h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      line-height: 1.1;
+    }
+
+    .report-hero p {
+      margin: 0;
+      max-width: 860px;
+      color: rgba(255, 255, 255, 0.88);
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .report-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 6px 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.92);
+    }
+
+    .report-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(180px, 100%), 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .report-card,
+    .report-panel {
+      min-width: 0;
+      background: var(--report-panel);
+      border: 1px solid var(--report-line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .report-card h2,
+    .report-panel h2 {
+      margin: 0 0 8px;
+      font-size: 12px;
+      color: var(--report-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .report-card strong {
+      display: block;
+      font-size: 26px;
+      line-height: 1.1;
+    }
+
+    .report-card span {
+      display: block;
+      margin-top: 8px;
+      color: var(--report-muted);
+      font-size: 12px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .report-accordion {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .report-disclosure {
+      min-width: 0;
+      background: var(--report-panel);
+      border: 1px solid var(--report-line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .report-disclosure summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+      min-width: 0;
+    }
+
+    .report-disclosure summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .report-disclosure summary::after {
+      content: "+";
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--report-line);
+      border-radius: 50%;
+      color: var(--report-accent);
+      font-size: 20px;
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+
+    .report-disclosure summary > span {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .report-disclosure[open] summary::after {
+      content: "-";
+    }
+
+    .report-title {
+      display: block;
+      color: var(--report-ink);
+      font-size: 18px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .report-subtitle {
+      display: block;
+      margin-top: 4px;
+      color: var(--report-muted);
+      font-size: 13px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .report-body {
+      border-top: 1px solid var(--report-line);
+      padding: 14px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .report-chart-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      min-width: 0;
+    }
+
+    .report-chart-head h2 {
+      margin: 0;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .report-control-group {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .report-field {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: var(--report-muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      max-width: 100%;
+    }
+
+    .report-field select {
+      min-width: 0;
+      width: min(100%, 190px);
+      max-width: 100%;
+      border: 1px solid var(--report-line);
+      border-radius: 6px;
+      padding: 6px 8px;
+      background: #fff;
+      color: var(--report-ink);
+      font-size: 13px;
+      text-transform: none;
+    }
+
+    .report-chart {
+      width: 100%;
+      min-height: 360px;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .report-chart-sm {
+      min-height: 300px;
+    }
+
+    .report-chart .js-plotly-plot,
+    .report-chart .plot-container {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    .report-note {
+      margin: 8px 0 0;
+      color: var(--report-muted);
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .report-analysis-band {
+      margin: 2px -14px -14px;
+      padding: 14px;
+      border-top: 1px solid var(--report-line);
+      background: linear-gradient(180deg, #f6fbff 0%, #ffffff 100%);
+    }
+
+    .report-hourly-chart {
+      border: 1px solid #dce8f4;
+      border-radius: 8px;
+      background: #f8fbff;
+    }
+
+    .report-calendar-shell {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .report-calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .report-calendar-weekdays span {
+      color: var(--report-muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .report-week-button:hover {
+      border-color: var(--report-accent);
+      box-shadow: 0 8px 20px rgba(17, 103, 177, 0.12);
+    }
+
+    .report-week-button.is-selected {
+      border-color: var(--report-accent);
+      background: #edf6ff;
+    }
+
+    .report-week-button:disabled {
+      cursor: default;
+      opacity: 0.48;
+      box-shadow: none;
+    }
+
+    .report-selected-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      border-top: 1px solid var(--report-line);
+      padding-top: 12px;
+    }
+
+    .report-selected-head h2,
+    .report-selected-head p {
+      margin: 0;
+    }
+
+    .report-selected-head p {
+      color: var(--report-muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    .report-selected-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(145px, 100%), 1fr));
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .report-selected-metric {
+      min-width: 0;
+      border: 1px solid var(--report-line);
+      border-radius: 6px;
+      padding: 10px;
+      background: #fbfdff;
+    }
+
+    .report-selected-metric span {
+      display: block;
+      color: var(--report-muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .report-selected-metric strong {
+      display: block;
+      margin-top: 5px;
+      font-size: 20px;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .report-week-calendar {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .report-week-button {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(128px, 0.7fr);
+      gap: 6px;
+      min-width: 0;
+      border: 1px solid var(--report-line);
+      border-radius: 6px;
+      padding: 6px;
+      background: #fff;
+      color: var(--report-ink);
+      cursor: pointer;
+    }
+
+    .report-week-day {
+      display: grid;
+      min-height: 42px;
+      place-items: center;
+      border-radius: 4px;
+      background: #f4f8fb;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .report-week-day.is-outside,
+    .report-week-day.is-after-cutoff {
+      color: var(--report-muted);
+      background: #f8fafc;
+      opacity: 0.58;
+    }
+
+    .report-week-total {
+      display: grid;
+      align-content: center;
+      gap: 3px;
+      min-width: 0;
+      border-left: 1px solid var(--report-line);
+      padding-left: 8px;
+      text-align: left;
+    }
+
+    .report-week-total strong,
+    .report-week-total span {
+      overflow-wrap: anywhere;
+    }
+
+    .report-week-total strong {
+      font-size: 12px;
+    }
+
+    .report-week-total span {
+      color: var(--report-muted);
+      font-size: 11px;
+    }
+
+    .report-empty {
+      background: var(--report-panel);
+      border: 1px solid var(--report-line);
+      border-radius: 8px;
+      padding: 18px;
+      color: var(--report-muted);
+      line-height: 1.5;
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 980px) {
+      .report-hero {
+        padding: 20px 18px 18px;
+      }
+
+      .report-hero h1 {
+        font-size: 26px;
+      }
+
+      .report-week-button {
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+      }
+
+      .report-week-total {
+        grid-column: 1 / -1;
+        border-left: 0;
+        border-top: 1px solid var(--report-line);
+        padding: 8px 0 2px;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="report-wrap">
+    <section class="report-hero">
+      <h1>Betting Activity Reports</h1>
+    </section>
+
+    {% if report_missing %}
+      <div class="report-empty">
+        Betting activity reports could not be loaded from {{ report_path }}.
+        {% if report_error %}<br>{{ report_error }}{% endif %}
+      </div>
+    {% else %}
+      <section class="report-metrics">
+        {% for card in overview_cards %}
+          <article class="report-card">
+            <h2>{{ card.label }}</h2>
+            <strong>{{ card.value }}</strong>
+            <span>{{ card.note }}</span>
+          </article>
+        {% endfor %}
+      </section>
+
+      <section class="report-accordion" aria-label="Betting activity report sections">
+        <details class="report-disclosure" id="daily-panel" open>
+          <summary>
+            <span>
+              <span class="report-title">Daily Reports</span>
+              <span class="report-subtitle">Choose a day and month, then review time-frame intensity and the hour-by-day behavior heatmap.</span>
+            </span>
+          </summary>
+          <div class="report-body">
+            <section class="report-panel">
+              <div class="report-chart-head">
+                <label class="report-field" for="daily-day">
+                  Day
+                  <select id="daily-day"></select>
+                </label>
+                <label class="report-field" for="daily-month">
+                  Month
+                  <select id="daily-month"></select>
+                </label>
+              </div>
+
+              <div class="report-selected-head">
+                <div>
+                  <h2 id="daily-selected-title">Selected Day</h2>
+                  <p id="daily-selected-subtitle"></p>
+                </div>
+              </div>
+              <div id="daily-selected-summary" class="report-selected-summary"></div>
+              <div class="report-chart-head">
+                <h2>Selected Time-Frame Heatmap</h2>
+                <label class="report-field" for="daily-band-metric">
+                  Metric
+                  <select id="daily-band-metric"></select>
+                </label>
+              </div>
+              <div id="daily-selected-bands-chart" class="report-chart report-chart-sm"></div>
+              <div class="report-analysis-band">
+                <div class="report-chart-head">
+                  <h2>Hour / Day Heatmap</h2>
+                  <label class="report-field" for="daily-hourly-metric">
+                    Metric
+                    <select id="daily-hourly-metric"></select>
+                  </label>
+                </div>
+                <div id="daily-hourly-chart" class="report-chart report-hourly-chart"></div>
+              </div>
+            </section>
+          </div>
+        </details>
+
+        <details class="report-disclosure" id="weekly-panel">
+          <summary>
+            <span>
+              <span class="report-title">Weekly Reports</span>
+              <span class="report-subtitle">Choose a month and week, then review the daily trend and time-band heatmap.</span>
+            </span>
+          </summary>
+          <div class="report-body">
+            <section class="report-panel">
+              <div class="report-chart-head">
+                <label class="report-field" for="weekly-week">
+                  Week
+                  <select id="weekly-week"></select>
+                </label>
+                <label class="report-field" for="weekly-month">
+                  Month
+                  <select id="weekly-month"></select>
+                </label>
+              </div>
+
+              <div class="report-selected-head">
+                <div>
+                  <h2 id="weekly-selected-title">Selected Week</h2>
+                  <p id="weekly-selected-subtitle"></p>
+                </div>
+              </div>
+              <div id="weekly-selected-summary" class="report-selected-summary"></div>
+              <div class="report-chart-head">
+                <h2>Daily Analysis</h2>
+                <label class="report-field" for="weekly-daily-metric">
+                  Metric
+                  <select id="weekly-daily-metric"></select>
+                </label>
+              </div>
+              <div id="weekly-daily-chart" class="report-chart report-chart-sm"></div>
+              <div class="report-chart-head">
+                <h2>Weekly Time-Band Heatmap</h2>
+                <label class="report-field" for="weekly-band-metric">
+                  Metric
+                  <select id="weekly-band-metric"></select>
+                </label>
+              </div>
+              <div id="weekly-selected-bands-chart" class="report-chart report-chart-sm"></div>
+            </section>
+          </div>
+        </details>
+
+        <details class="report-disclosure" id="monthly-panel">
+          <summary>
+            <span>
+              <span class="report-title">Monthly Reports</span>
+              <span class="report-subtitle">Choose a month, then review weekly trend movement and time-frame intensity.</span>
+            </span>
+          </summary>
+          <div class="report-body">
+            <section class="report-panel">
+              <div class="report-chart-head">
+                <label class="report-field" for="monthly-month">
+                  Month
+                  <select id="monthly-month"></select>
+                </label>
+                <label class="report-field" for="monthly-year">
+                  Year
+                  <select id="monthly-year"></select>
+                </label>
+                <label class="report-field" for="monthly-metric">
+                  Metric
+                  <select id="monthly-metric"></select>
+                </label>
+              </div>
+              <div class="report-selected-head">
+                <div>
+                  <h2 id="monthly-selected-title">Selected Month</h2>
+                  <p id="monthly-selected-subtitle"></p>
+                </div>
+              </div>
+              <div class="report-chart-head">
+                <h2>Weekly Analysis</h2>
+              </div>
+              <div id="monthly-weekly-chart" class="report-chart report-chart-sm"></div>
+              <div class="report-chart-head">
+                <h2>Monthly Time-Band Heatmap</h2>
+                <label class="report-field" for="monthly-timeframe-week">
+                  Week
+                  <select id="monthly-timeframe-week"></select>
+                </label>
+              </div>
+              <div id="monthly-bands-chart" class="report-chart"></div>
+            </section>
+          </div>
+        </details>
+
+        <details class="report-disclosure" id="annual-panel">
+          <summary>
+            <span>
+              <span class="report-title">Annual Reports</span>
+              <span class="report-subtitle">Review year and month trends with line charts, then inspect time-band intensity.</span>
+            </span>
+          </summary>
+          <div class="report-body">
+            <section class="report-panel">
+              <div class="report-chart-head">
+                <h2>Annual Trend</h2>
+                <label class="report-field" for="annual-metric">
+                  Metric
+                  <select id="annual-metric"></select>
+                </label>
+              </div>
+              <div id="annual-trend-chart" class="report-chart"></div>
+            </section>
+
+            <section class="report-panel">
+              <div class="report-chart-head">
+                <label class="report-field" for="annual-monthly-year">
+                  Year
+                  <select id="annual-monthly-year"></select>
+                </label>
+                <label class="report-field" for="annual-monthly-metric">
+                  Metric
+                  <select id="annual-monthly-metric"></select>
+                </label>
+              </div>
+              <div class="report-selected-head">
+                <div>
+                  <h2 id="annual-monthly-title">Monthly Analysis</h2>
+                  <p id="annual-monthly-subtitle"></p>
+                </div>
+              </div>
+              <div id="annual-monthly-chart" class="report-chart"></div>
+            </section>
+
+            <section class="report-panel">
+              <div class="report-chart-head">
+                <h2>Annual Time-Band Heatmap</h2>
+                <label class="report-field" for="annual-time-band-month">
+                  Month
+                  <select id="annual-time-band-month"></select>
+                </label>
+                <label class="report-field" for="annual-time-band-metric">
+                  Metric
+                  <select id="annual-time-band-metric"></select>
+                </label>
+              </div>
+              <div id="annual-bands-chart" class="report-chart"></div>
+            </section>
+          </div>
+        </details>
+      </section>
+    {% endif %}
+  </div>
+
+  {% if not report_missing %}
+    {{ report_payload|json_script:"betting-report-payload" }}
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script>
+      (function () {
+        const payload = JSON.parse(document.getElementById("betting-report-payload").textContent);
+        const metricMeta = payload.metric_meta;
+        const metricKeys = Object.keys(metricMeta);
+        const timeBandOrder = payload.time_band_order;
+        const plotConfig = { responsive: true, displayModeBar: true, displaylogo: false };
+        const summaryMetricKeys = ["bet_count", "unique_bettors", "total_stake", "total_payout", "total_profit", "avg_odds", "roi_percent", "win_rate"];
+        const dailyRows = payload.daily.metrics || [];
+        const dailyTimeBandMetricsByDate = payload.daily.time_band_metrics_by_date || {};
+        const weeklyRows = payload.weekly.metrics || [];
+        const weeklyTimeBandMetricsByStart = payload.weekly.time_band_metrics_by_start || {};
+        const monthlyRows = payload.monthly.metrics || [];
+        const monthlyTimeBandMetricsByMonth = payload.monthly.time_band_metrics_by_month || {};
+        const dailyRowsByDate = new Map(dailyRows.filter((row) => row.date_key).map((row) => [row.date_key, row]));
+        const weeklyRowsByStart = new Map(weeklyRows.filter((row) => row.week_start).map((row) => [row.week_start, row]));
+        const rendered = {
+          daily: false,
+          weekly: false,
+          monthly: false,
+          annual: false
+        };
+        const monthOptions = buildMonthOptions();
+        const yearOptions = buildYearOptions();
+        let selectedDailyDateKey = (payload.calendar && payload.calendar.end_date) || (dailyRows.length ? dailyRows[dailyRows.length - 1].date_key : null);
+        let selectedDailyMonthKey = selectedDailyDateKey ? selectedDailyDateKey.slice(0, 7) : (monthOptions.length ? monthOptions[0].key : null);
+        let selectedWeeklyStart = weeklyRows.length ? weeklyRows[weeklyRows.length - 1].week_start : null;
+        let selectedWeeklyMonthKey = selectedWeeklyStart && monthOptions.some((month) => month.key === selectedWeeklyStart.slice(0, 7)) ? selectedWeeklyStart.slice(0, 7) : selectedDailyMonthKey;
+        let selectedMonthlyMonthKey = selectedDailyMonthKey || (monthOptions.length ? monthOptions[monthOptions.length - 1].key : null);
+        let selectedMonthlyYearKey = selectedMonthlyMonthKey ? selectedMonthlyMonthKey.slice(0, 4) : (yearOptions.length ? yearOptions[yearOptions.length - 1].key : null);
+        let selectedMonthlyMonthNumber = selectedMonthlyMonthKey ? selectedMonthlyMonthKey.slice(5, 7) : null;
+        let selectedAnnualMonthlyYearKey = selectedMonthlyYearKey || (yearOptions.length ? yearOptions[yearOptions.length - 1].key : null);
+        let selectedMonthlyTimeFrameWeek = null;
+        let selectedAnnualTimeBandMonthKey = selectedMonthlyMonthKey;
+
+        function metricFormat(metricKey) {
+          const meta = metricMeta[metricKey];
+          return meta.decimals === 0 ? ",.0f" : ",.2f";
+        }
+
+        function formatMetricValue(metricKey, value) {
+          const meta = metricMeta[metricKey];
+          const numberValue = Number(value) || 0;
+          const formatted = numberValue.toLocaleString(undefined, {
+            minimumFractionDigits: meta.decimals,
+            maximumFractionDigits: meta.decimals
+          });
+          return formatted + (meta.suffix || "");
+        }
+
+        function fillMetricSelect(selectId, defaultMetric) {
+          const select = document.getElementById(selectId);
+          if (!select) {
+            return null;
+          }
+          metricKeys.forEach((key) => {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = metricMeta[key].label;
+            option.selected = key === defaultMetric;
+            select.appendChild(option);
+          });
+          return select;
+        }
+
+        function buildMonthOptions() {
+          const seen = new Set();
+          const months = [];
+          dailyRows.forEach((row) => {
+            if (!row.month_key || seen.has(row.month_key)) {
+              return;
+            }
+            seen.add(row.month_key);
+            months.push({ key: row.month_key, label: row.month_label });
+          });
+          return months;
+        }
+
+        function buildYearOptions() {
+          const seen = new Set();
+          const years = [];
+          monthOptions.forEach((month) => {
+            const year = month.key.slice(0, 4);
+            if (seen.has(year)) {
+              return;
+            }
+            seen.add(year);
+            years.push({ key: year, label: year });
+          });
+          return years;
+        }
+
+        function fillYearSelect(selectId, selectedYear) {
+          const select = document.getElementById(selectId);
+          if (!select) {
+            return null;
+          }
+          select.innerHTML = "";
+          yearOptions.forEach((year) => {
+            const option = document.createElement("option");
+            option.value = year.key;
+            option.textContent = year.label;
+            option.selected = year.key === selectedYear;
+            select.appendChild(option);
+          });
+          if (selectedYear && yearOptions.some((year) => year.key === selectedYear)) {
+            select.value = selectedYear;
+          }
+          return select;
+        }
+
+        function fillMonthSelect(selectId, selectedMonth) {
+          const select = document.getElementById(selectId);
+          if (!select) {
+            return null;
+          }
+          select.innerHTML = "";
+          monthOptions.forEach((month) => {
+            const option = document.createElement("option");
+            option.value = month.key;
+            option.textContent = month.label;
+            option.selected = month.key === selectedMonth;
+            select.appendChild(option);
+          });
+          if (selectedMonth && monthOptions.some((month) => month.key === selectedMonth)) {
+            select.value = selectedMonth;
+          }
+          return select;
+        }
+
+        function monthNameFromOption(month) {
+          return month.label.replace(" " + month.key.slice(0, 4), "");
+        }
+
+        function monthlyOptionsForYear(yearKey) {
+          return monthOptions.filter((month) => month.key.slice(0, 4) === yearKey);
+        }
+
+        function ensureSelectedMonthlyMonth() {
+          const yearMonths = monthlyOptionsForYear(selectedMonthlyYearKey);
+          if (!yearMonths.length) {
+            return;
+          }
+          const candidateKey = selectedMonthlyYearKey + "-" + selectedMonthlyMonthNumber;
+          selectedMonthlyMonthKey = yearMonths.some((month) => month.key === candidateKey)
+            ? candidateKey
+            : yearMonths[yearMonths.length - 1].key;
+          selectedMonthlyYearKey = selectedMonthlyMonthKey.slice(0, 4);
+          selectedMonthlyMonthNumber = selectedMonthlyMonthKey.slice(5, 7);
+        }
+
+        function fillMonthlyMonthSelect(selectId) {
+          const select = document.getElementById(selectId);
+          if (!select) {
+            return null;
+          }
+          ensureSelectedMonthlyMonth();
+          select.innerHTML = "";
+          monthlyOptionsForYear(selectedMonthlyYearKey).forEach((month) => {
+            const option = document.createElement("option");
+            option.value = month.key.slice(5, 7);
+            option.textContent = monthNameFromOption(month);
+            option.selected = month.key === selectedMonthlyMonthKey;
+            select.appendChild(option);
+          });
+          if (selectedMonthlyMonthNumber) {
+            select.value = selectedMonthlyMonthNumber;
+          }
+          return select;
+        }
+
+        function selectedMonthDailyRows() {
+          return dailyRows.filter((row) => row.month_key === selectedDailyMonthKey);
+        }
+
+        function ensureSelectedDailyDateInMonth() {
+          const monthRows = selectedMonthDailyRows();
+          if (!monthRows.length) {
+            return;
+          }
+          if (!monthRows.some((row) => row.date_key === selectedDailyDateKey)) {
+            selectedDailyDateKey = monthRows[monthRows.length - 1].date_key;
+          }
+        }
+
+        function fillDaySelect(selectId) {
+          const select = document.getElementById(selectId);
+          if (!select) {
+            return null;
+          }
+          ensureSelectedDailyDateInMonth();
+          select.innerHTML = "";
+          selectedMonthDailyRows().forEach((row) => {
+            const option = document.createElement("option");
+            option.value = row.date_key;
+            option.textContent = row.label + " (" + row.day_name + ")";
+            option.selected = row.date_key === selectedDailyDateKey;
+            select.appendChild(option);
+          });
+          if (selectedDailyDateKey) {
+            select.value = selectedDailyDateKey;
+          }
+          return select;
+        }
+
+        function pad(value) {
+          return String(value).padStart(2, "0");
+        }
+
+        function dateKeyFromDate(date) {
+          return date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate());
+        }
+
+        function monthEndKey(monthKey) {
+          const year = Number(monthKey.slice(0, 4));
+          const monthIndex = Number(monthKey.slice(5, 7)) - 1;
+          return dateKeyFromDate(new Date(year, monthIndex + 1, 0));
+        }
+
+        function weeklyRowsForMonth(monthKey) {
+          if (!monthKey) {
+            return weeklyRows;
+          }
+          const monthStartKey = monthKey + "-01";
+          const monthEnd = monthEndKey(monthKey);
+          return weeklyRows.filter((row) => row.week_start <= monthEnd && row.week_end >= monthStartKey);
+        }
+
+        function selectedMonthWeeklyRows() {
+          return weeklyRowsForMonth(selectedWeeklyMonthKey);
+        }
+
+        function selectedMonthlyTimeFrameWeeks() {
+          return weeklyRowsForMonth(selectedMonthlyMonthKey);
+        }
+
+        function ensureSelectedMonthlyTimeFrameWeek() {
+          const rows = selectedMonthlyTimeFrameWeeks();
+          if (!rows.length) {
+            selectedMonthlyTimeFrameWeek = null;
+            return;
+          }
+          if (!rows.some((row) => row.week_start === selectedMonthlyTimeFrameWeek)) {
+            selectedMonthlyTimeFrameWeek = rows[rows.length - 1].week_start;
+          }
+        }
+
+        function fillMonthlyTimeFrameWeekSelect(selectId) {
+          const select = document.getElementById(selectId);
+          if (!select) {
+            return null;
+          }
+          ensureSelectedMonthlyTimeFrameWeek();
+          select.innerHTML = "";
+          selectedMonthlyTimeFrameWeeks().forEach((row, index) => {
+            const option = document.createElement("option");
+            option.value = row.week_start;
+            option.textContent = "w" + (index + 1);
+            option.selected = row.week_start === selectedMonthlyTimeFrameWeek;
+            select.appendChild(option);
+          });
+          if (selectedMonthlyTimeFrameWeek) {
+            select.value = selectedMonthlyTimeFrameWeek;
+          }
+          return select;
+        }
+
+        function selectedAnnualTimeBandMonthOptions() {
+          return monthlyOptionsForYear(selectedAnnualMonthlyYearKey);
+        }
+
+        function ensureSelectedAnnualTimeBandMonth() {
+          const months = selectedAnnualTimeBandMonthOptions();
+          if (!months.length) {
+            selectedAnnualTimeBandMonthKey = null;
+            return;
+          }
+          if (!months.some((month) => month.key === selectedAnnualTimeBandMonthKey)) {
+            selectedAnnualTimeBandMonthKey = months[months.length - 1].key;
+          }
+        }
+
+        function fillAnnualTimeBandMonthSelect(selectId) {
+          const select = document.getElementById(selectId);
+          if (!select) {
+            return null;
+          }
+          ensureSelectedAnnualTimeBandMonth();
+          select.innerHTML = "";
+          selectedAnnualTimeBandMonthOptions().forEach((month) => {
+            const option = document.createElement("option");
+            option.value = month.key;
+            option.textContent = monthNameFromOption(month);
+            option.selected = month.key === selectedAnnualTimeBandMonthKey;
+            select.appendChild(option);
+          });
+          if (selectedAnnualTimeBandMonthKey) {
+            select.value = selectedAnnualTimeBandMonthKey;
+          }
+          return select;
+        }
+
+        function ensureSelectedWeeklyInMonth() {
+          const monthRows = selectedMonthWeeklyRows();
+          if (!monthRows.length) {
+            return;
+          }
+          if (!monthRows.some((row) => row.week_start === selectedWeeklyStart)) {
+            selectedWeeklyStart = monthRows[monthRows.length - 1].week_start;
+          }
+        }
+
+        function fillWeekSelect(selectId) {
+          const select = document.getElementById(selectId);
+          if (!select) {
+            return null;
+          }
+          ensureSelectedWeeklyInMonth();
+          select.innerHTML = "";
+          selectedMonthWeeklyRows().forEach((row) => {
+            const option = document.createElement("option");
+            option.value = row.week_start;
+            option.textContent = row.iso_label + " | " + row.label;
+            option.selected = row.week_start === selectedWeeklyStart;
+            select.appendChild(option);
+          });
+          if (selectedWeeklyStart) {
+            select.value = selectedWeeklyStart;
+          }
+          return select;
+        }
+
+        function baseLayout(title, xTitle, yTitle) {
+          return {
+            title: { text: title, font: { size: 15, color: "#162230" } },
+            paper_bgcolor: "#ffffff",
+            plot_bgcolor: "#ffffff",
+            margin: { l: 62, r: 24, t: 46, b: 64 },
+            xaxis: { title: xTitle, gridcolor: "#e8edf3", zerolinecolor: "#d8e0ea", automargin: true },
+            yaxis: { title: yTitle, gridcolor: "#e8edf3", zerolinecolor: "#d8e0ea", automargin: true },
+            legend: { orientation: "h", y: -0.22 },
+            font: { family: "Arial, sans-serif", color: "#162230" }
+          };
+        }
+
+        function renderMetricChart(containerId, rows, metricKey, title, chartStyle, surface) {
+          const container = document.getElementById(containerId);
+          if (!window.Plotly || !container) {
+            return;
+          }
+          if (!rows.length) {
+            container.innerHTML = "";
+            return;
+          }
+          const meta = metricMeta[metricKey];
+          const suffix = meta.suffix || "";
+          const baseTrace = {
+            x: rows.map((row) => row.axis_label || row.label),
+            y: rows.map((row) => row[metricKey]),
+            customdata: rows.map((row) => row.hover_label || row.label),
+            hovertemplate:
+              "<b>%{customdata}</b><br>" +
+              meta.label + ": %{y:" + metricFormat(metricKey) + "}" + suffix + "<extra></extra>"
+          };
+          const trace = {
+            ...baseTrace,
+            type: "scatter",
+            mode: chartStyle === "markers" ? "markers" : "lines+markers",
+            line: { color: meta.color, width: 3 },
+            marker: { color: meta.color, size: 7 }
+          };
+          const layout = baseLayout(title, "", meta.label);
+          if (surface === "tinted") {
+            layout.paper_bgcolor = "#f8fbff";
+            layout.plot_bgcolor = "#f1f7fd";
+            layout.xaxis.gridcolor = "#d9e7f3";
+            layout.yaxis.gridcolor = "#d9e7f3";
+          }
+          if (rows.length > 10) {
+            layout.xaxis.tickangle = -28;
+          }
+          Plotly.react(containerId, [trace], layout, plotConfig);
+        }
+
+        function colorScaleForMetric(metricKey) {
+          if (["total_profit", "roi_percent"].includes(metricKey)) {
+            return [
+              [0, "#ba2c2c"],
+              [0.5, "#ffffff"],
+              [1, "#138a55"]
+            ];
+          }
+          return [
+            [0, "#f4f8fb"],
+            [0.45, "#8cc5d9"],
+            [1, metricMeta[metricKey].color]
+          ];
+        }
+
+        function renderHeatmapChart(containerId, xLabels, yLabels, zValues, metricKey, title, surface) {
+          const container = document.getElementById(containerId);
+          if (!window.Plotly || !container) {
+            return;
+          }
+          if (!xLabels.length || !yLabels.length || !zValues.length) {
+            container.innerHTML = "";
+            return;
+          }
+          const meta = metricMeta[metricKey];
+          const suffix = meta.suffix || "";
+          const trace = {
+            type: "heatmap",
+            x: xLabels,
+            y: yLabels,
+            z: zValues,
+            colorscale: colorScaleForMetric(metricKey),
+            hoverongaps: false,
+            hovertemplate:
+              "<b>%{y}</b><br>" +
+              "%{x}<br>" +
+              meta.label + ": %{z:" + metricFormat(metricKey) + "}" + suffix + "<extra></extra>"
+          };
+          if (["total_profit", "roi_percent"].includes(metricKey)) {
+            trace.zmid = 0;
+          }
+          const layout = baseLayout(title, "", "");
+          layout.margin = { l: 112, r: 24, t: 46, b: 72 };
+          layout.xaxis.tickangle = xLabels.length > 10 ? -28 : 0;
+          layout.yaxis.autorange = "reversed";
+          layout.showlegend = false;
+          if (surface === "tinted") {
+            layout.paper_bgcolor = "#f8fbff";
+            layout.plot_bgcolor = "#f1f7fd";
+          }
+          Plotly.react(containerId, [trace], layout, plotConfig);
+        }
+
+        function heatmapMatrixFromHourly(metricKey) {
+          const heatmap = (payload.hourly && payload.hourly.heatmap) || {};
+          const valuesByMetric = heatmap.values_by_metric || {};
+          return valuesByMetric[metricKey] || heatmap.values || [];
+        }
+
+        function metricRowsToBandValues(rows, metricKey) {
+          const rowsByBand = new Map((rows || []).map((row) => [row.label, row]));
+          return timeBandOrder.map((band) => {
+            const row = rowsByBand.get(band);
+            return Number(row && row[metricKey]) || 0;
+          });
+        }
+
+        function renderTimeBandHeatmap(containerId, groups, metricKey, title) {
+          renderHeatmapChart(
+            containerId,
+            timeBandOrder,
+            groups.map((group) => group.label),
+            groups.map((group) => metricRowsToBandValues(group.rows, metricKey)),
+            metricKey,
+            title
+          );
+        }
+
+        function renderMetricCards(containerId, row) {
+          const container = document.getElementById(containerId);
+          if (!container) {
+            return;
+          }
+          container.innerHTML = "";
+          if (!row) {
+            return;
+          }
+          summaryMetricKeys.forEach((metricKey) => {
+            const card = document.createElement("div");
+            card.className = "report-selected-metric";
+            const label = document.createElement("span");
+            label.textContent = metricMeta[metricKey].label;
+            const value = document.createElement("strong");
+            value.textContent = formatMetricValue(metricKey, row[metricKey]);
+            card.appendChild(label);
+            card.appendChild(value);
+            container.appendChild(card);
+          });
+        }
+
+        function renderSelectedDaily() {
+          const row = dailyRowsByDate.get(selectedDailyDateKey);
+          const title = document.getElementById("daily-selected-title");
+          const subtitle = document.getElementById("daily-selected-subtitle");
+          if (title) {
+            title.textContent = row ? row.label : "Selected Day";
+          }
+          if (subtitle) {
+            subtitle.textContent = row ? row.day_name + " | " + formatMetricValue("bet_count", row.bet_count) + " bets" : "";
+          }
+          renderMetricCards("daily-selected-summary", row);
+          renderDailyTimeBands();
+          renderDailyHourly();
+        }
+
+        function renderDailyTimeBands() {
+          const row = dailyRowsByDate.get(selectedDailyDateKey);
+          const rows = dailyTimeBandMetricsByDate[selectedDailyDateKey] || [];
+          const metricKey = dailyBandMetric ? dailyBandMetric.value : "bet_count";
+          renderTimeBandHeatmap(
+            "daily-selected-bands-chart",
+            [{ label: row ? row.label : "Selected Day", rows: rows }],
+            metricKey,
+            row ? "Selected Time Frames: " + row.label : "Selected Time Frames"
+          );
+        }
+
+        function renderDailyHourly() {
+          const heatmap = (payload.hourly && payload.hourly.heatmap) || {};
+          const metricKey = dailyHourlyMetric ? dailyHourlyMetric.value : "bet_count";
+          renderHeatmapChart(
+            "daily-hourly-chart",
+            heatmap.hours || [],
+            heatmap.days || [],
+            heatmapMatrixFromHourly(metricKey),
+            metricKey,
+            "Hour / Day Heatmap",
+            "tinted"
+          );
+        }
+
+        function renderSelectedWeekly() {
+          const row = weeklyRowsByStart.get(selectedWeeklyStart);
+          const title = document.getElementById("weekly-selected-title");
+          const subtitle = document.getElementById("weekly-selected-subtitle");
+          if (title) {
+            title.textContent = row ? row.label : "Selected Week";
+          }
+          if (subtitle) {
+            subtitle.textContent = row ? row.iso_label + " | " + formatMetricValue("bet_count", row.bet_count) + " bets" : "";
+          }
+          renderMetricCards("weekly-selected-summary", row);
+          renderWeeklyDailyAnalysis();
+          renderWeeklyTimeBands();
+        }
+
+        function selectedWeeklyDailyRows() {
+          const row = weeklyRowsByStart.get(selectedWeeklyStart);
+          if (!row) {
+            return [];
+          }
+          return dailyRows
+            .filter((dailyRow) => dailyRow.date_key >= row.week_start && dailyRow.date_key <= row.week_end)
+            .map((dailyRow) => ({
+              ...dailyRow,
+              label: dailyRow.day_name.slice(0, 3) + " " + dailyRow.label
+            }));
+        }
+
+        function renderWeeklyDailyAnalysis() {
+          const row = weeklyRowsByStart.get(selectedWeeklyStart);
+          const rows = selectedWeeklyDailyRows();
+          const metricKey = weeklyDailyMetric ? weeklyDailyMetric.value : "bet_count";
+          renderMetricChart(
+            "weekly-daily-chart",
+            rows,
+            metricKey,
+            row ? "Daily Analysis: " + row.label : "Daily Analysis",
+            "line"
+          );
+        }
+
+        function renderWeeklyTimeBands() {
+          const row = weeklyRowsByStart.get(selectedWeeklyStart);
+          const groups = selectedWeeklyDailyRows().map((dailyRow) => ({
+            label: dailyRow.label,
+            rows: dailyTimeBandMetricsByDate[dailyRow.date_key] || []
+          }));
+          const metricKey = weeklyBandMetric ? weeklyBandMetric.value : "bet_count";
+          renderTimeBandHeatmap(
+            "weekly-selected-bands-chart",
+            groups,
+            metricKey,
+            row ? "Weekly Time Bands: " + row.label : "Weekly Time Bands"
+          );
+        }
+
+        function selectedMonthlyOption() {
+          return monthOptions.find((month) => month.key === selectedMonthlyMonthKey) || null;
+        }
+
+        function selectedMonthlyWeeklyRows() {
+          return weeklyRowsForMonth(selectedMonthlyMonthKey).map((row, index) => ({
+            ...row,
+            axis_label: "w" + (index + 1),
+            hover_label: row.iso_label + " | " + row.label
+          }));
+        }
+
+        function renderMonthlyWeeklyAnalysis() {
+          const month = selectedMonthlyOption();
+          const rows = selectedMonthlyWeeklyRows();
+          const metricKey = monthlyMetric ? monthlyMetric.value : "bet_count";
+          renderMetricChart(
+            "monthly-weekly-chart",
+            rows,
+            metricKey,
+            month ? "Weekly Analysis: " + month.label : "Weekly Analysis",
+            "line"
+          );
+        }
+
+        function renderMonthlyTimeBands() {
+          const month = selectedMonthlyOption();
+          const title = document.getElementById("monthly-selected-title");
+          const subtitle = document.getElementById("monthly-selected-subtitle");
+          const week = weeklyRowsByStart.get(selectedMonthlyTimeFrameWeek);
+          const rows = (week && weeklyTimeBandMetricsByStart[selectedMonthlyTimeFrameWeek]) || [];
+          const metricKey = monthlyMetric ? monthlyMetric.value : "bet_count";
+          if (title) {
+            title.textContent = month ? month.label : "Selected Month";
+          }
+          if (subtitle) {
+            subtitle.textContent = month ? formatMetricValue("bet_count", rows.reduce((sum, row) => sum + (Number(row.bet_count) || 0), 0)) + " bets" : "";
+          }
+          renderTimeBandHeatmap(
+            "monthly-bands-chart",
+            [{ label: week ? week.iso_label : "Selected Week", rows: rows }],
+            metricKey,
+            week ? "Monthly Time Bands: " + week.label : "Monthly Time Bands"
+          );
+        }
+
+        function selectedAnnualMonthlyRows() {
+          return monthlyRows
+            .filter((row) => row.year_key === selectedAnnualMonthlyYearKey)
+            .map((row) => ({
+              ...row,
+              label: row.month_name || row.label
+            }));
+        }
+
+        function renderAnnualMonthlyAnalysis() {
+          const rows = selectedAnnualMonthlyRows();
+          const metricKey = annualMonthlyMetric ? annualMonthlyMetric.value : "bet_count";
+          const title = document.getElementById("annual-monthly-title");
+          const subtitle = document.getElementById("annual-monthly-subtitle");
+          if (title) {
+            title.textContent = "Monthly Analysis";
+          }
+          if (subtitle) {
+            subtitle.textContent = selectedAnnualMonthlyYearKey ? selectedAnnualMonthlyYearKey + " | " + rows.length + " months" : "";
+          }
+          renderMetricChart(
+            "annual-monthly-chart",
+            rows,
+            metricKey,
+            selectedAnnualMonthlyYearKey ? "Monthly Analysis: " + selectedAnnualMonthlyYearKey : "Monthly Analysis",
+            "line"
+          );
+        }
+
+        function renderAnnualTimeBandMix() {
+          const month = monthOptions.find((option) => option.key === selectedAnnualTimeBandMonthKey) || null;
+          const rows = selectedAnnualTimeBandMonthKey ? (monthlyTimeBandMetricsByMonth[selectedAnnualTimeBandMonthKey] || []) : [];
+          const metricKey = annualTimeBandMetric ? annualTimeBandMetric.value : "bet_count";
+          renderTimeBandHeatmap(
+            "annual-bands-chart",
+            [{ label: month ? monthNameFromOption(month) : "Selected Month", rows: rows }],
+            metricKey,
+            month ? "Annual Time Bands: " + month.label : "Annual Time Bands"
+          );
+        }
+
+        const dailyBandMetric = fillMetricSelect("daily-band-metric", "bet_count");
+        const dailyHourlyMetric = fillMetricSelect("daily-hourly-metric", "bet_count");
+        const weeklyDailyMetric = fillMetricSelect("weekly-daily-metric", "bet_count");
+        const weeklyBandMetric = fillMetricSelect("weekly-band-metric", "bet_count");
+        const monthlyMetric = fillMetricSelect("monthly-metric", "bet_count");
+        const annualMetric = fillMetricSelect("annual-metric", "bet_count");
+        const annualMonthlyMetric = fillMetricSelect("annual-monthly-metric", "bet_count");
+        const annualTimeBandMetric = fillMetricSelect("annual-time-band-metric", "bet_count");
+        const dailyMonth = fillMonthSelect("daily-month", selectedDailyMonthKey);
+        const dailyDay = fillDaySelect("daily-day");
+        const weeklyMonth = fillMonthSelect("weekly-month", selectedWeeklyMonthKey);
+        const weeklyWeek = fillWeekSelect("weekly-week");
+        const monthlyMonth = fillMonthlyMonthSelect("monthly-month");
+        const monthlyYear = fillYearSelect("monthly-year", selectedMonthlyYearKey);
+        const annualMonthlyYear = fillYearSelect("annual-monthly-year", selectedAnnualMonthlyYearKey);
+        const monthlyTimeFrameWeek = fillMonthlyTimeFrameWeekSelect("monthly-timeframe-week");
+        const annualTimeBandMonth = fillAnnualTimeBandMonthSelect("annual-time-band-month");
+
+        function renderDaily() {
+          fillDaySelect("daily-day");
+          renderSelectedDaily();
+        }
+
+        function renderWeekly() {
+          fillWeekSelect("weekly-week");
+          renderSelectedWeekly();
+        }
+
+        function renderMonthly() {
+          fillYearSelect("monthly-year", selectedMonthlyYearKey);
+          fillMonthlyMonthSelect("monthly-month");
+          fillMonthlyTimeFrameWeekSelect("monthly-timeframe-week");
+          renderMonthlyWeeklyAnalysis();
+          renderMonthlyTimeBands();
+        }
+
+        function renderAnnual() {
+          renderMetricChart("annual-trend-chart", payload.annual.metrics, annualMetric.value, "Annual Trend", "line");
+          renderAnnualMonthlyAnalysis();
+          fillAnnualTimeBandMonthSelect("annual-time-band-month");
+          renderAnnualTimeBandMix();
+        }
+
+        function renderWhenOpened(panelId, key, callback) {
+          const panel = document.getElementById(panelId);
+          if (!panel) {
+            return;
+          }
+          panel.addEventListener("toggle", function () {
+            if (!panel.open || rendered[key]) {
+              return;
+            }
+            callback();
+            rendered[key] = true;
+          });
+          if (panel.open && !rendered[key]) {
+            callback();
+            rendered[key] = true;
+          }
+        }
+
+        if (dailyBandMetric) {
+          dailyBandMetric.addEventListener("change", renderDailyTimeBands);
+        }
+        if (dailyHourlyMetric) {
+          dailyHourlyMetric.addEventListener("change", renderDailyHourly);
+        }
+        if (weeklyDailyMetric) {
+          weeklyDailyMetric.addEventListener("change", renderWeeklyDailyAnalysis);
+        }
+        if (weeklyBandMetric) {
+          weeklyBandMetric.addEventListener("change", renderWeeklyTimeBands);
+        }
+        if (monthlyMetric) {
+          monthlyMetric.addEventListener("change", renderMonthly);
+        }
+        if (annualMetric) {
+          annualMetric.addEventListener("change", renderAnnual);
+        }
+        if (annualMonthlyMetric) {
+          annualMonthlyMetric.addEventListener("change", renderAnnualMonthlyAnalysis);
+        }
+        if (annualTimeBandMetric) {
+          annualTimeBandMetric.addEventListener("change", renderAnnualTimeBandMix);
+        }
+        if (dailyMonth) {
+          dailyMonth.addEventListener("change", function () {
+            selectedDailyMonthKey = dailyMonth.value;
+            ensureSelectedDailyDateInMonth();
+            renderDaily();
+          });
+        }
+        if (dailyDay) {
+          dailyDay.addEventListener("change", function () {
+            selectedDailyDateKey = dailyDay.value;
+            selectedDailyMonthKey = selectedDailyDateKey.slice(0, 7);
+            renderDaily();
+          });
+        }
+        if (weeklyWeek) {
+          weeklyWeek.addEventListener("change", function () {
+            selectedWeeklyStart = weeklyWeek.value;
+            renderSelectedWeekly();
+          });
+        }
+        if (weeklyMonth) {
+          weeklyMonth.addEventListener("change", function () {
+            selectedWeeklyMonthKey = weeklyMonth.value;
+            ensureSelectedWeeklyInMonth();
+            renderWeekly();
+          });
+        }
+        if (monthlyMonth) {
+          monthlyMonth.addEventListener("change", function () {
+            selectedMonthlyMonthNumber = monthlyMonth.value;
+            selectedMonthlyMonthKey = selectedMonthlyYearKey + "-" + selectedMonthlyMonthNumber;
+            renderMonthly();
+          });
+        }
+        if (monthlyTimeFrameWeek) {
+          monthlyTimeFrameWeek.addEventListener("change", function () {
+            selectedMonthlyTimeFrameWeek = monthlyTimeFrameWeek.value;
+            renderMonthlyTimeBands();
+          });
+        }
+        if (monthlyYear) {
+          monthlyYear.addEventListener("change", function () {
+            selectedMonthlyYearKey = monthlyYear.value;
+            ensureSelectedMonthlyMonth();
+            renderMonthly();
+          });
+        }
+        if (annualMonthlyYear) {
+          annualMonthlyYear.addEventListener("change", function () {
+            selectedAnnualMonthlyYearKey = annualMonthlyYear.value;
+            ensureSelectedAnnualTimeBandMonth();
+            fillAnnualTimeBandMonthSelect("annual-time-band-month");
+            renderAnnualMonthlyAnalysis();
+            renderAnnualTimeBandMix();
+          });
+        }
+        if (annualTimeBandMonth) {
+          annualTimeBandMonth.addEventListener("change", function () {
+            selectedAnnualTimeBandMonthKey = annualTimeBandMonth.value;
+            renderAnnualTimeBandMix();
+          });
+        }
+
+        renderWhenOpened("daily-panel", "daily", renderDaily);
+        renderWhenOpened("weekly-panel", "weekly", renderWeekly);
+        renderWhenOpened("monthly-panel", "monthly", renderMonthly);
+        renderWhenOpened("annual-panel", "annual", renderAnnual);
+      })();
+    </script>
+  {% endif %}
+{% endblock %}

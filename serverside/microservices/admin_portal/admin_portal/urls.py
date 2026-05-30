@@ -27,7 +27,14 @@ admin_service_pattern = rf'^admin/(?P<service_id>({service_ids}))/(?P<path>.*)$'
 embed_service_pattern = rf'^embed/(?P<service_id>({service_ids}))/(?P<path>.*)$'
 
 urlpatterns = [
+    path("support/login/", portal_views.support_login, name="support-login"),
+    path("support/logout/", portal_views.support_logout, name="support-logout"),
+    path("support/respond/<int:enquiry_id>/", portal_views.support_respond, name="support-respond"),
+    path("support/", portal_views.support_inbox, name="support-inbox"),
     path("admin/analytics/", portal_views.analytics_embed, name="admin-analytics-embed"),
+    path("admin/ml/bettor-segments/", portal_views.ml_bettor_segments, name="admin-ml-bettor-segments"),
+    path("admin/support/login/", RedirectView.as_view(url="/support/login/", permanent=False)),
+    path("admin/support/", RedirectView.as_view(url="/support/", permanent=False)),
     re_path(embed_service_pattern, gateway_views.forward_embed_service, name="embed-service-proxy"),
     re_path(
         admin_service_pattern,

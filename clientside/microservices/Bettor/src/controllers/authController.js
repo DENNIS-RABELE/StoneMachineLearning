@@ -7,11 +7,13 @@ const fetch =
         import("node-fetch").then(({ default: fetchImpl }) => fetchImpl(...args));
 const authPool = require("../lib/database");
 const { pool: bettingPool } = require("../lib/dbFlush");
+const { recordActivityEvent } = require("../lib/activityStore");
 const {
   sendVerificationEmail,
   sendPasswordResetEmail,
 } = require("../services/emailService");
 const BETTORS_TABLE = "\"Bettors_bettors\"";
+const SUPPORT_ENQUIRY_TABLE = "portal_support_enquiry";
 const DEMO_MONEY_TABLE = "demonstration_money";
 const CLIENT_PLAYER_WALLET_TABLE = "client_player_wallet";
 const DEFAULT_DEMO_BALANCE = 1000;
@@ -24,6 +26,14 @@ const pendingRegistrations = new Map();
 const pendingPasswordResets = new Map();
 const VERIFICATION_TTL_MS = 10 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 10 * 60 * 1000;
+const SUPPORT_CATEGORIES = new Set([
+  "account",
+  "betting",
+  "payment",
+  "complaint",
+  "suggestion",
+  "other",
+]);
 
 function generateVerificationCode() {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -31,6 +41,20 @@ function generateVerificationCode() {
 
 function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
+}
+
+function serializeSupportEnquiry(row) {
+  return {
+    id: Number(row.id),
+    category: row.category,
+    subject: row.subject,
+    message: row.message,
+    status: row.status,
+    supportResponse: row.support_response || "",
+    respondedAt: row.responded_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
 }
 
 async function upsertDemoMoneyForUser(userId, amount = DEFAULT_DEMO_BALANCE) {
@@ -165,6 +189,14 @@ exports.login = async (req, res) => {
 
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) return res.status(401).json({ error: "Invalid credentials" });
+
+    recordActivityEvent({
+      bettorId: user.id,
+      eventType: "login",
+      metadata: { source: "bettor_auth" },
+    }).catch((error) =>
+      console.warn("[Bettor Activity] Login event failed:", error.message),
+    );
 
     const token = jwt.sign(
       { userId: user.id, email: user.email },
@@ -335,6 +367,21 @@ exports.verifyEmail = async (req, res) => {
 
     pendingRegistrations.delete(email);
 
+    recordActivityEvent({
+      bettorId: user.id,
+      eventType: "registered",
+      metadata: { source: "email_verification" },
+    }).catch((error) =>
+      console.warn("[Bettor Activity] Registration event failed:", error.message),
+    );
+    recordActivityEvent({
+      bettorId: user.id,
+      eventType: "login",
+      metadata: { source: "email_verification" },
+    }).catch((error) =>
+      console.warn("[Bettor Activity] Verification login event failed:", error.message),
+    );
+
     res.json({
       message: "Email verified and account created",
       token,
@@ -398,5 +445,101 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.logout = async (req, res) => {
+  recordActivityEvent({
+    bettorId: req.user?.userId,
+    eventType: "logout",
+    metadata: { source: "bettor_auth" },
+  }).catch((error) =>
+    console.warn("[Bettor Activity] Logout event failed:", error.message),
+  );
   res.json({ message: "Logged out successfully" });
+};
+
+exports.trackActivity = async (req, res) => {
+  try {
+    const result = await recordActivityEvent({
+      bettorId: req.user?.userId,
+      eventType: req.body?.eventType,
+      metadata: req.body?.metadata,
+    });
+
+    if (!result.recorded && result.reason === "invalid_event_type") {
+      return res.status(400).json({ error: "Invalid activity event type" });
+    }
+    if (!result.recorded && result.reason === "invalid_bettor_id") {
+      return res.status(401).json({ error: "Invalid authenticated bettor" });
+    }
+
+    return res.status(result.recorded ? 201 : 202).json(result);
+  } catch (err) {
+    console.error("Activity tracking failed:", err);
+    return res.status(500).json({ error: "Could not track activity" });
+  }
+};
+
+exports.createSupportEnquiry = async (req, res) => {
+  try {
+    const bettorId = Number(req.user?.userId);
+    if (!Number.isFinite(bettorId) || bettorId <= 0) {
+      return res.status(401).json({ error: "Invalid authenticated bettor" });
+    }
+
+    const category = SUPPORT_CATEGORIES.has(req.body?.category)
+      ? req.body.category
+      : "other";
+    const subject = String(req.body?.subject || "").trim();
+    const message = String(req.body?.message || "").trim();
+
+    if (!subject || !message) {
+      return res.status(400).json({ error: "Subject and message are required" });
+    }
+
+    const profile = await authPool.query(
+      `SELECT email FROM ${BETTORS_TABLE} WHERE id = $1 LIMIT 1`,
+      [bettorId],
+    );
+    const bettorEmail = profile.rows[0]?.email || req.user?.email || "";
+
+    const result = await authPool.query(
+      `INSERT INTO ${SUPPORT_ENQUIRY_TABLE}
+       (bettor_id, bettor_email, category, subject, message, status, support_response, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, 'open', '', NOW(), NOW())
+       RETURNING id, category, subject, message, status, support_response, responded_at, created_at, updated_at`,
+      [bettorId, bettorEmail, category, subject, message],
+    );
+
+    return res.status(201).json({ enquiry: serializeSupportEnquiry(result.rows[0]) });
+  } catch (err) {
+    console.error("Create support enquiry failed:", err);
+    if (err?.code === "42P01") {
+      return res.status(503).json({ error: "Support enquiry table is not ready" });
+    }
+    return res.status(500).json({ error: "Could not submit enquiry" });
+  }
+};
+
+exports.listSupportEnquiries = async (req, res) => {
+  try {
+    const bettorId = Number(req.user?.userId);
+    if (!Number.isFinite(bettorId) || bettorId <= 0) {
+      return res.status(401).json({ error: "Invalid authenticated bettor" });
+    }
+
+    const result = await authPool.query(
+      `SELECT id, category, subject, message, status, support_response, responded_at, created_at, updated_at
+       FROM ${SUPPORT_ENQUIRY_TABLE}
+       WHERE bettor_id = $1
+       ORDER BY updated_at DESC, created_at DESC
+       LIMIT 50`,
+      [bettorId],
+    );
+
+    return res.json({ enquiries: result.rows.map(serializeSupportEnquiry) });
+  } catch (err) {
+    console.error("List support enquiries failed:", err);
+    if (err?.code === "42P01") {
+      return res.json({ enquiries: [] });
+    }
+    return res.status(500).json({ error: "Could not load enquiries" });
+  }
 };

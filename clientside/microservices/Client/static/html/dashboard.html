@@ -46,6 +46,9 @@
           <button class="menu-btn" type="button" data-view="view-performance">
             Performance/Statistics
           </button>
+          <button class="menu-btn" type="button" data-view="view-support">
+            Enquiries and Help
+          </button>
           <button
             class="menu-btn"
             id="accountMenuBtn"
@@ -487,6 +490,45 @@
           data-subtitle="Manage profile, limits and verification status."
         >
           <div class="simple-panel">Account panel coming next.</div>
+        </section>
+
+        <section
+          class="dashboard-view"
+          id="view-support"
+          data-title="Enquiries and Help"
+          data-subtitle="Send account questions, complaints, and suggestions to customer support."
+        >
+          <section class="support-panel">
+            <div class="section-head">
+              <h2>Enquiries and Help</h2>
+            </div>
+            <form class="support-form" id="supportEnquiryForm">
+              <label>
+                Type
+                <select id="supportCategory" required>
+                  <option value="account">Account Issue</option>
+                  <option value="betting">Betting Question</option>
+                  <option value="payment">Payment Question</option>
+                  <option value="complaint">Complaint</option>
+                  <option value="suggestion">Suggestion</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+              <label>
+                Subject
+                <input id="supportSubject" type="text" maxlength="160" required />
+              </label>
+              <label>
+                Message
+                <textarea id="supportMessage" rows="5" required></textarea>
+              </label>
+              <button class="place-bet-btn" type="submit">Submit Enquiry</button>
+              <p class="support-status" id="supportStatus"></p>
+            </form>
+            <div class="support-thread-list" id="supportThreadList">
+              <p class="slip-empty">Loading enquiries...</p>
+            </div>
+          </section>
         </section>
       </main>
     </div>

@@ -1,0 +1,808 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Review Bettor Segments{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <style>
+    html,
+    body {
+      overflow-x: hidden;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --ml-bg: #f5f7fa;
+      --ml-panel: #ffffff;
+      --ml-ink: #162230;
+      --ml-muted: #637083;
+      --ml-line: #d8e0ea;
+      --ml-accent: #1167b1;
+      --ml-good: #138a55;
+      --ml-warn: #a05d00;
+      --ml-risk: #ba2c2c;
+    }
+
+    #nav-sidebar,
+    .toggle-nav-sidebar {
+      display: none !important;
+    }
+
+    #main,
+    #content-start {
+      display: block !important;
+      margin-left: 0 !important;
+      max-width: none !important;
+      min-width: 0 !important;
+    }
+
+    #content,
+    #content.colM {
+      max-width: none;
+      width: 100%;
+      min-width: 0;
+      overflow-x: hidden;
+    }
+
+    .ml-wrap {
+      width: min(100%, 1320px);
+      min-width: 0;
+      padding: 0 8px 24px;
+      color: var(--ml-ink);
+      max-width: 1320px;
+    }
+
+    .ml-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding: 22px 22px 18px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #0f4c81 0%, #1167b1 58%, #138a55 100%);
+    }
+
+    .ml-top h1 {
+      margin: 0 0 6px;
+      color: #fff;
+      font-size: 28px;
+      line-height: 1.1;
+    }
+
+    .ml-top p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.86);
+      max-width: 780px;
+    }
+
+    .ml-switch {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 4px;
+      border: 1px solid var(--ml-line);
+      background: var(--ml-panel);
+      border-radius: 8px;
+      white-space: normal;
+      max-width: 100%;
+    }
+
+    .ml-switch a {
+      display: inline-block;
+      padding: 8px 12px;
+      color: #0d3d69;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: 700;
+    }
+
+    .ml-switch a.active {
+      color: #fff;
+      background: var(--ml-accent);
+    }
+
+    .ml-metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(190px, 100%), 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .ml-card,
+    .ml-panel {
+      min-width: 0;
+      background: var(--ml-panel);
+      border: 1px solid var(--ml-line);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .ml-card h2,
+    .ml-panel h2 {
+      margin: 0 0 8px;
+      font-size: 13px;
+      color: var(--ml-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .ml-value {
+      font-size: 26px;
+      font-weight: 800;
+    }
+
+    .ml-clusters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
+      gap: 12px;
+    }
+
+    .ml-cluster {
+      min-width: 0;
+      border-left: 4px solid var(--ml-accent);
+    }
+
+    .ml-cluster h3 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .ml-cluster p {
+      margin: 8px 0;
+      color: var(--ml-muted);
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .ml-kv {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    .ml-kv span {
+      color: var(--ml-muted);
+      display: block;
+    }
+
+    .ml-kv strong {
+      font-size: 15px;
+    }
+
+    .ml-accordion {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .ml-disclosure {
+      min-width: 0;
+      background: var(--ml-panel);
+      border: 1px solid var(--ml-line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .ml-disclosure summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px;
+      cursor: pointer;
+      list-style: none;
+      user-select: none;
+      min-width: 0;
+    }
+
+    .ml-disclosure summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .ml-disclosure summary::after {
+      content: "+";
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      border: 1px solid var(--ml-line);
+      border-radius: 50%;
+      color: var(--ml-accent);
+      font-size: 20px;
+      font-weight: 700;
+      flex: 0 0 auto;
+    }
+
+    .ml-disclosure summary > span {
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .ml-disclosure[open] summary::after {
+      content: "-";
+    }
+
+    .ml-disclosure-title {
+      display: block;
+      color: var(--ml-ink);
+      font-size: 18px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .ml-disclosure-subtitle {
+      display: block;
+      margin-top: 4px;
+      color: var(--ml-muted);
+      font-size: 13px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+
+    .ml-disclosure-body {
+      border-top: 1px solid var(--ml-line);
+      padding: 14px;
+    }
+
+    .ml-chart-panel {
+      min-height: 420px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .ml-chart-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 10px;
+      min-width: 0;
+    }
+
+    .ml-chart-head h2 {
+      margin: 0;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .ml-chart-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    .ml-field {
+      display: inline-flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      color: var(--ml-muted);
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      max-width: 100%;
+    }
+
+    .ml-field select {
+      min-width: 0;
+      width: min(100%, 170px);
+      max-width: 100%;
+      border: 1px solid var(--ml-line);
+      border-radius: 6px;
+      padding: 6px 8px;
+      background: #fff;
+      color: var(--ml-ink);
+      font-size: 13px;
+      text-transform: none;
+    }
+
+    .ml-chart {
+      flex: 1;
+      min-height: 340px;
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .ml-chart .js-plotly-plot,
+    .ml-chart .plot-container {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    .ml-chart-note {
+      margin: 8px 0 0;
+      color: var(--ml-muted);
+      font-size: 12px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+
+    .ml-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+
+    .ml-table th,
+    .ml-table td {
+      border-bottom: 1px solid var(--ml-line);
+      padding: 9px 8px;
+      text-align: left;
+      font-size: 13px;
+      vertical-align: top;
+    }
+
+    .ml-table th {
+      background: #eef3f8;
+      color: #26394d;
+    }
+
+    .ml-tag {
+      display: inline-block;
+      border-radius: 5px;
+      padding: 3px 7px;
+      background: #eaf3fb;
+      color: #144f83;
+      font-weight: 700;
+    }
+
+    .ml-risk-low {
+      color: var(--ml-good);
+      font-weight: 800;
+    }
+
+    .ml-risk-medium {
+      color: var(--ml-warn);
+      font-weight: 800;
+    }
+
+    .ml-risk-high {
+      color: var(--ml-risk);
+      font-weight: 800;
+    }
+
+    .ml-section {
+      margin-bottom: 16px;
+    }
+
+    .ml-empty {
+      background: var(--ml-panel);
+      border: 1px solid var(--ml-line);
+      border-radius: 8px;
+      padding: 18px;
+      color: var(--ml-muted);
+    }
+
+    @media (max-width: 980px) {
+      .ml-top {
+        padding: 18px 16px 16px;
+      }
+
+      .ml-switch {
+        margin-top: 12px;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="ml-wrap">
+      <div class="ml-top">
+        <div>
+          <h1>Review Bettor Segments</h1>
+        </div>
+    </div>
+
+    {% if model_missing %}
+      <div class="ml-empty">
+        Bettor segment data was not found. Run the audit, cleaning, profile, and training scripts first.
+      </div>
+    {% else %}
+      <section class="ml-metrics">
+        <article class="ml-card">
+          <h2>Bettors Segmented</h2>
+          <div class="ml-value">{{ bettor_count }}</div>
+        </article>
+        <article class="ml-card">
+          <h2>Approved Clusters</h2>
+          <div class="ml-value">{{ cluster_count }}</div>
+        </article>
+        <article class="ml-card">
+          <h2>Business Decision</h2>
+          <div class="ml-value">3</div>
+        </article>
+      </section>
+
+      <section class="ml-accordion" aria-label="ML admin sections">
+        <details class="ml-disclosure" id="bettor-scatter-panel" open>
+          <summary>
+            <span>
+              <span class="ml-disclosure-title">Bettor Behavior Scatter Plots</span>
+              <span class="ml-disclosure-subtitle">Explore bettors by stake, odds, ROI, win rate, combo rate, and other behavior features.</span>
+            </span>
+          </summary>
+          <div class="ml-disclosure-body">
+            <article class="ml-panel ml-chart-panel">
+              <div class="ml-chart-head">
+                <h2>Bettor Behavior Scatter</h2>
+                <div class="ml-chart-controls">
+                  <label class="ml-field" for="scatter-x">
+                    X
+                    <select id="scatter-x"></select>
+                  </label>
+                  <label class="ml-field" for="scatter-y">
+                    Y
+                    <select id="scatter-y"></select>
+                  </label>
+                </div>
+              </div>
+              <div id="bettor-scatter-chart" class="ml-chart"></div>
+              <p class="ml-chart-note">Hover a point to inspect player behavior, segment confidence, promotion signal, and safer-play risk hint.</p>
+            </article>
+          </div>
+        </details>
+
+        <details class="ml-disclosure" id="bettor-bubble-panel">
+          <summary>
+            <span>
+              <span class="ml-disclosure-title">Bubble Strategy Scatter</span>
+              <span class="ml-disclosure-subtitle">Average odds, ROI, stake volume, and cluster color in one bettor strategy view.</span>
+            </span>
+          </summary>
+          <div class="ml-disclosure-body">
+            <article class="ml-panel ml-chart-panel">
+              <div class="ml-chart-head">
+                <h2>Average Odds vs ROI</h2>
+              </div>
+              <div id="bettor-bubble-chart" class="ml-chart"></div>
+              <p class="ml-chart-note">Bubble size tracks total stake volume. Color follows the selected bettor cluster, with style and risk shown on hover.</p>
+            </article>
+          </div>
+        </details>
+
+        <details class="ml-disclosure" id="cluster-radar-panel">
+          <summary>
+            <span>
+              <span class="ml-disclosure-title">Bettor Personality Radar</span>
+              <span class="ml-disclosure-subtitle">Compare cluster personalities across risk, odds appetite, combo usage, stake size, win rate, and ROI.</span>
+            </span>
+          </summary>
+          <div class="ml-disclosure-body">
+            <section class="ml-panel ml-section">
+              <h2>Cluster Personality Comparison</h2>
+              <div id="cluster-radar-chart" class="ml-chart"></div>
+            </section>
+            <div class="ml-clusters">
+              {% for cluster in selected_clusters %}
+                <article class="ml-card ml-cluster">
+                  <h3>{{ cluster.cluster_name }}</h3>
+                  <span class="ml-tag">Cluster {{ cluster.cluster_id }} &middot; {{ cluster.cluster_size }} bettors &middot; {{ cluster.cluster_share }}%</span>
+                  <p>{{ cluster.cluster_description }}</p>
+                  <div class="ml-kv">
+                    <div><span>Peak Time</span><strong>{{ cluster.favorite_time_band }}</strong></div>
+                    <div><span>Promotion</span><strong>{{ cluster.promotion_targeting_signal }}</strong></div>
+                    <div><span>Avg Stake</span><strong>{{ cluster.average_stake_mean }}</strong></div>
+                    <div><span>Avg Odds</span><strong>{{ cluster.average_odds_mean }}</strong></div>
+                    <div><span>Win Rate</span><strong>{{ cluster.win_rate_mean }}%</strong></div>
+                    <div><span>High Odds Rate</span><strong>{{ cluster.high_odds_rate_mean }}%</strong></div>
+                  </div>
+                </article>
+              {% endfor %}
+            </div>
+          </div>
+        </details>
+      </section>
+    {% endif %}
+  </div>
+  {% if not model_missing %}
+    {{ scatter_points|json_script:"scatter-points-data" }}
+    {{ selected_clusters|json_script:"cluster-info-data" }}
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+    <script>
+      (function () {
+        const scatterPoints = JSON.parse(document.getElementById("scatter-points-data").textContent);
+        const clusterInfo = JSON.parse(document.getElementById("cluster-info-data").textContent);
+        const axisFields = [
+          ["average_stake", "Average Stake"],
+          ["average_odds", "Average Odds"],
+          ["roi_percent", "ROI %"],
+          ["win_rate", "Win Rate %"],
+          ["combo_bet_rate", "Combo Bet Rate %"],
+          ["high_odds_rate", "High Odds Rate %"],
+          ["night_bet_rate", "Night Bet Rate %"],
+          ["total_bets", "Total Bets"]
+        ];
+        const palette = ["#1167b1", "#138a55", "#a05d00", "#ba2c2c", "#5d5fef", "#008b8b"];
+        const scatterX = document.getElementById("scatter-x");
+        const scatterY = document.getElementById("scatter-y");
+        const plotConfig = { responsive: true, displayModeBar: true, displaylogo: false };
+        const rendered = {
+          scatter: false,
+          bubble: false,
+          radar: false
+        };
+
+        function labelFor(field) {
+          const match = axisFields.find((item) => item[0] === field);
+          return match ? match[1] : field;
+        }
+
+        function fillAxisSelect(select, selectedValue) {
+          axisFields.forEach(([value, label]) => {
+            const option = document.createElement("option");
+            option.value = value;
+            option.textContent = label;
+            option.selected = value === selectedValue;
+            select.appendChild(option);
+          });
+        }
+
+        function baseLayout(title, xTitle, yTitle) {
+          return {
+            title: { text: title, font: { size: 15, color: "#162230" } },
+            paper_bgcolor: "#ffffff",
+            plot_bgcolor: "#ffffff",
+            margin: { l: 58, r: 24, t: 42, b: 56 },
+            xaxis: { title: xTitle, gridcolor: "#e8edf3", zerolinecolor: "#d8e0ea", automargin: true },
+            yaxis: { title: yTitle, gridcolor: "#e8edf3", zerolinecolor: "#d8e0ea", automargin: true },
+            legend: { orientation: "h", y: -0.22 },
+            font: { family: "Arial, sans-serif", color: "#162230" }
+          };
+        }
+
+        function numericValue(value) {
+          const numberValue = Number(value);
+          return Number.isFinite(numberValue) ? numberValue : 0;
+        }
+
+        function scaledBubbleSize(value, minValue, maxValue) {
+          if (maxValue <= minValue) {
+            return 22;
+          }
+          return 12 + ((value - minValue) / (maxValue - minValue)) * 34;
+        }
+
+        function clusterLabel(cluster) {
+          return "C" + cluster.cluster_id + " " + cluster.cluster_name;
+        }
+
+        function riskScore(cluster) {
+          const risk = String(cluster.responsible_gambling_risk_hint || "").toLowerCase();
+          if (risk.includes("high")) {
+            return 92;
+          }
+          if (risk.includes("medium")) {
+            return 58;
+          }
+          if (risk.includes("low")) {
+            return 24;
+          }
+          return 40;
+        }
+
+        function normalizeToHundred(value, minValue, maxValue) {
+          if (maxValue <= minValue) {
+            return 55;
+          }
+          return Math.max(0, Math.min(100, ((value - minValue) / (maxValue - minValue)) * 100));
+        }
+
+        function renderScatter() {
+          if (!window.Plotly || !scatterPoints.length) {
+            return;
+          }
+          const xField = scatterX.value;
+          const yField = scatterY.value;
+          const clusterNames = Array.from(new Set(scatterPoints.map((point) => point.cluster_name)));
+          const traces = clusterNames.map((clusterName, index) => {
+            const points = scatterPoints.filter((point) => point.cluster_name === clusterName);
+            return {
+              type: "scatter",
+              mode: "markers",
+              name: clusterName,
+              x: points.map((point) => point[xField]),
+              y: points.map((point) => point[yField]),
+              marker: {
+                color: palette[index % palette.length],
+                size: points.map((point) => 8 + (point.cluster_confidence * 8)),
+                opacity: 0.78,
+                line: { color: "#ffffff", width: 0.7 }
+              },
+              customdata: points.map((point) => [
+                point.player_id,
+                point.cluster_confidence,
+                point.promotion_targeting_signal,
+                point.responsible_gambling_risk_hint,
+                point.favorite_time_band,
+                point.preferred_strategy_style,
+                point.secondary_cluster_id,
+                point.secondary_cluster_probability
+              ]),
+              hovertemplate:
+                "<b>Player %{customdata[0]}</b><br>" +
+                "Cluster: " + clusterName + "<br>" +
+                labelFor(xField) + ": %{x}<br>" +
+                labelFor(yField) + ": %{y}<br>" +
+                "Confidence: %{customdata[1]:.0%}<br>" +
+                "Secondary cluster: %{customdata[6]} (%{customdata[7]:.0%})<br>" +
+                "Time band: %{customdata[4]}<br>" +
+                "Strategy: %{customdata[5]}<br>" +
+                "Promotion: %{customdata[2]}<br>" +
+                "Risk: %{customdata[3]}<extra></extra>"
+            };
+          });
+          Plotly.react(
+            "bettor-scatter-chart",
+            traces,
+            baseLayout("Bettor Segment Map", labelFor(xField), labelFor(yField)),
+            plotConfig
+          );
+        }
+
+        function renderBubble() {
+          if (!window.Plotly || !scatterPoints.length) {
+            return;
+          }
+          const stakeValues = scatterPoints.map((point) => numericValue(point.total_stake));
+          const minStake = Math.min(...stakeValues);
+          const maxStake = Math.max(...stakeValues);
+          const clusterNames = Array.from(new Set(scatterPoints.map((point) => point.cluster_name)));
+          const traces = clusterNames.map((clusterName, index) => {
+            const points = scatterPoints.filter((point) => point.cluster_name === clusterName);
+            return {
+              type: "scatter",
+              mode: "markers",
+              name: clusterName,
+              x: points.map((point) => point.average_odds),
+              y: points.map((point) => point.roi_percent),
+              marker: {
+                color: palette[index % palette.length],
+                size: points.map((point) => scaledBubbleSize(numericValue(point.total_stake), minStake, maxStake)),
+                opacity: 0.58,
+                line: { color: "#ffffff", width: 0.8 }
+              },
+              customdata: points.map((point) => [
+                point.player_id,
+                point.total_stake,
+                point.average_stake,
+                point.preferred_strategy_style,
+                point.favorite_time_band,
+                point.win_rate,
+                point.responsible_gambling_risk_hint,
+                point.cluster_confidence
+              ]),
+              hovertemplate:
+                "<b>Player %{customdata[0]}</b><br>" +
+                "Average odds: %{x:.2f}<br>" +
+                "ROI: %{y:.2f}%<br>" +
+                "Total stake: %{customdata[1]:,.2f}<br>" +
+                "Average stake: %{customdata[2]:,.2f}<br>" +
+                "Strategy: %{customdata[3]}<br>" +
+                "Peak time: %{customdata[4]}<br>" +
+                "Win rate: %{customdata[5]:.2f}%<br>" +
+                "Risk: %{customdata[6]}<br>" +
+                "Confidence: %{customdata[7]:.0%}<extra></extra>"
+            };
+          });
+          Plotly.react(
+            "bettor-bubble-chart",
+            traces,
+            baseLayout("Bubble Strategy Scatter", "Average Odds", "ROI %"),
+            plotConfig
+          );
+        }
+
+        function renderRadar() {
+          if (!window.Plotly || !clusterInfo.length) {
+            return;
+          }
+          const dimensions = [
+            { key: "risk", label: "Risk Level", value: riskScore },
+            { key: "average_odds_mean", label: "Avg Odds", value: (cluster) => numericValue(cluster.average_odds_mean) },
+            { key: "combo_bet_rate_mean", label: "Combo Rate", value: (cluster) => numericValue(cluster.combo_bet_rate_mean) },
+            { key: "average_stake_mean", label: "Stake Size", value: (cluster) => numericValue(cluster.average_stake_mean) },
+            { key: "win_rate_mean", label: "Win Rate", value: (cluster) => numericValue(cluster.win_rate_mean) },
+            { key: "roi_percent_mean", label: "ROI", value: (cluster) => numericValue(cluster.roi_percent_mean) }
+          ];
+          const ranges = {};
+          dimensions.forEach((dimension) => {
+            const values = clusterInfo.map((cluster) => dimension.value(cluster));
+            ranges[dimension.key] = { min: Math.min(...values), max: Math.max(...values) };
+          });
+          const theta = dimensions.map((dimension) => dimension.label);
+          const traces = clusterInfo.map((cluster, index) => {
+            const values = dimensions.map((dimension) => {
+              if (dimension.key === "risk") {
+                return dimension.value(cluster);
+              }
+              const range = ranges[dimension.key];
+              return normalizeToHundred(dimension.value(cluster), range.min, range.max);
+            });
+            const rawValues = dimensions.map((dimension) => dimension.value(cluster));
+            return {
+              type: "scatterpolar",
+              mode: "lines+markers",
+              fill: "toself",
+              name: clusterLabel(cluster),
+              r: values.concat(values[0]),
+              theta: theta.concat(theta[0]),
+              marker: { color: palette[index % palette.length], size: 5 },
+              line: { color: palette[index % palette.length], width: 2 },
+              opacity: 0.62,
+              customdata: rawValues.concat(rawValues[0]),
+              hovertemplate:
+                "<b>" + clusterLabel(cluster) + "</b><br>" +
+                "%{theta}: %{customdata:.2f}<extra></extra>"
+            };
+          });
+          const layout = {
+            title: { text: "Bettor Personality Radar", font: { size: 15, color: "#162230" } },
+            paper_bgcolor: "#ffffff",
+            plot_bgcolor: "#ffffff",
+            margin: { l: 42, r: 42, t: 48, b: 42 },
+            polar: {
+              bgcolor: "#ffffff",
+              radialaxis: {
+                visible: true,
+                range: [0, 100],
+                tickfont: { size: 10, color: "#637083" },
+                gridcolor: "#d8e0ea"
+              },
+              angularaxis: { gridcolor: "#d8e0ea" }
+            },
+            legend: { orientation: "h", y: -0.14 },
+            font: { family: "Arial, sans-serif", color: "#162230" }
+          };
+          Plotly.react(
+            "cluster-radar-chart",
+            traces,
+            layout,
+            plotConfig
+          );
+        }
+
+        function renderWhenOpened(panel, key, callback) {
+          if (!panel) {
+            return;
+          }
+          panel.addEventListener("toggle", function () {
+            if (!panel.open || rendered[key]) {
+              return;
+            }
+            callback();
+            rendered[key] = true;
+          });
+          if (panel.open && !rendered[key]) {
+            callback();
+            rendered[key] = true;
+          }
+        }
+
+        fillAxisSelect(scatterX, "average_stake");
+        fillAxisSelect(scatterY, "average_odds");
+        scatterX.addEventListener("change", renderScatter);
+        scatterY.addEventListener("change", renderScatter);
+
+        renderWhenOpened(document.getElementById("bettor-scatter-panel"), "scatter", renderScatter);
+        renderWhenOpened(document.getElementById("bettor-bubble-panel"), "bubble", renderBubble);
+        renderWhenOpened(document.getElementById("cluster-radar-panel"), "radar", renderRadar);
+      })();
+    </script>
+  {% endif %}
+{% endblock %}

@@ -34,3 +34,21 @@ class DemoMoney(models.Model):
     def __str__(self):
         return f"User {self.user_id} balance {self.amount}"
 
+
+class BettorActivityEvent(models.Model):
+    id = models.BigAutoField(primary_key=True, serialize=False)
+    bettor_id = models.BigIntegerField(db_index=True)
+    event_type = models.CharField(max_length=32, db_index=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        db_table = "bettor_activity_event"
+        indexes = [
+            models.Index(fields=["bettor_id", "created_at"], name="idx_bettor_activity_user_ts"),
+            models.Index(fields=["event_type", "created_at"], name="idx_bettor_activity_type_ts"),
+        ]
+
+    def __str__(self):
+        return f"Bettor {self.bettor_id} {self.event_type} at {self.created_at}"
+

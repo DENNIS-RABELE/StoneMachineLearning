@@ -17,6 +17,9 @@ router.post(
 );
 router.get("/user/profile", authenticateToken, authController.getProfile);
 router.post("/logout", authenticateToken, authController.logout);
+router.post("/activity", authenticateToken, authController.trackActivity);
+router.get("/support/enquiries", authenticateToken, authController.listSupportEnquiries);
+router.post("/support/enquiries", authenticateToken, authController.createSupportEnquiry);
 
 module.exports = router;
 

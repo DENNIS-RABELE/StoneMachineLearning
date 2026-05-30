@@ -515,6 +515,8 @@ app.use(
     "/api/reset-password",
     "/api/resend-verification",
     "/api/logout",
+    "/api/activity",
+    "/api/support/enquiries",
   ],
   (req, res) => forwardRequest(req, res, BETTOR_URL),
 );

@@ -6,7 +6,7 @@ const { Pool } = require('pg');
     user: process.env.DB_USER || process.env.GAME_DB_USER || 'postgres',
     host: process.env.DB_HOST || process.env.GAME_DB_HOST || 'localhost',
     database: process.env.GAME_DB_NAME || 'DECISIONAPP',
-    password: process.env.DB_PASS || process.env.DB_PASSWORD || process.env.GAME_DB_PASS || process.env.GAME_DB_PASSWORD || '123456',
+    password: process.env.DB_PASS || process.env.DB_PASSWORD || process.env.GAME_DB_PASS || process.env.GAME_DB_PASSWORD || 'Software',
     port: Number(process.env.DB_PORT || process.env.GAME_DB_PORT || 5432),
   });
   try {

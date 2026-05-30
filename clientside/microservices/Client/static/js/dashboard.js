@@ -92,6 +92,12 @@ const demoBalanceMessage = document.getElementById("demoBalanceMessage");
 const slipStakeInput = document.getElementById("slipStakeInput");
 const slipPossibleWinnings = document.getElementById("slipPossibleWinnings");
 const globalGameplayState = document.getElementById("globalGameplayState");
+const supportEnquiryForm = document.getElementById("supportEnquiryForm");
+const supportCategory = document.getElementById("supportCategory");
+const supportSubject = document.getElementById("supportSubject");
+const supportMessage = document.getElementById("supportMessage");
+const supportStatus = document.getElementById("supportStatus");
+const supportThreadList = document.getElementById("supportThreadList");
 
 const betSlip = [];
 let characters = [];
@@ -928,6 +934,7 @@ async function resolveLoginState() {
       const payload = await response.json();
       isUserLoggedIn = true;
       currentUserProfile = payload?.user || null;
+      trackBettorActivity("profile_view", { source: "dashboard" });
     } else {
       isUserLoggedIn = false;
       currentUserProfile = null;
@@ -1049,11 +1056,30 @@ function switchView(viewId) {
   if (viewId === "view-transactions") {
     loadBets();
   }
+  if (viewId === "view-support") {
+    loadSupportEnquiries();
+  }
 }
 
 function getAuthHeaders() {
   const token = localStorage.getItem("token");
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function trackBettorActivity(eventType, metadata = {}) {
+  if (!isUserLoggedIn) return;
+  const headers = getAuthHeaders();
+  if (!headers.Authorization) return;
+
+  fetch(`${API_BASE}/api/activity`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...headers,
+    },
+    body: JSON.stringify({ eventType, metadata }),
+    keepalive: true,
+  }).catch(() => {});
 }
 
 function formatMoney(value) {
@@ -3335,6 +3361,11 @@ function addToSlip(option, betType) {
     probability: option.probability,
     betType: isDoubleBet ? "Double" : "Single",
   });
+  trackBettorActivity("betslip_created", {
+    character_id: current.id,
+    option_code: option.key,
+    bet_type: isDoubleBet ? "double" : "single",
+  });
   renderSlip();
 }
 
@@ -3634,6 +3665,26 @@ async function loadOptions() {
     }
   });
 
+  if (latestOptionsByCharacter.size > 0) {
+    const marketsViewed = Array.from(latestOptionsByCharacter.values()).reduce(
+      (sum, payload) => {
+        const singles =
+          (payload?.single?.draw || []).length +
+          (payload?.single?.float || []).length;
+        const doubles = Object.values(payload?.double || {}).reduce(
+          (innerSum, items) => innerSum + (Array.isArray(items) ? items.length : 0),
+          0,
+        );
+        return sum + singles + doubles;
+      },
+      0,
+    );
+    trackBettorActivity("odds_view", {
+      characters_viewed: latestOptionsByCharacter.size,
+      markets_viewed: marketsViewed,
+    });
+  }
+
   if (latestOptionsByCharacter.size === 0) {
     renderOptionsBoard();
     selectedCharacterMeta.textContent =
@@ -3872,6 +3923,11 @@ async function placeSlipBets() {
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
+      trackBettorActivity("failed_bet", {
+        character_id: bet.characterId,
+        option_code: bet.option,
+        status: response.status,
+      });
       throw new Error(payload?.error || `Bet failed (${response.status})`);
     }
 
@@ -3879,6 +3935,10 @@ async function placeSlipBets() {
   });
 
   const placedBets = await Promise.all(requests);
+  trackBettorActivity("bet_placed", {
+    bet_count: placedBets.length,
+    total_stake: totalStake,
+  });
   betSlip.length = 0;
   renderSlip();
   refreshOptionAvailability();
@@ -3933,6 +3993,7 @@ function selectCharacter(characterId) {
   fetchAndApplyLiveSnapshot();
   selectedAnalysisCharacterId = selectedCharacterId;
   if (didChange) {
+    trackBettorActivity("market_view", { character_id: selectedCharacterId });
     populatePerfCharacterNav();
     syncPerformanceState();
   }
@@ -4042,6 +4103,11 @@ document.addEventListener("visibilitychange", () => {
 });
 
 window.addEventListener("beforeunload", () => {
+  if (betSlip.length > 0) {
+    trackBettorActivity("betslip_abandoned", {
+      selected_count: betSlip.length,
+    });
+  }
   stopLiveUpdates();
   stopRoundTimer();
   stopGameplayStateSync();

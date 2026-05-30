@@ -151,6 +151,9 @@ PUT  /api/bettors/{id}/
      Description: Update bettor
 DELETE /api/bettors/{id}/
      Description: Delete bettor
+POST /api/activity
+     Body: { eventType, metadata }
+     Description: Track authenticated bettor activity for analytics
 ```
 
 ---

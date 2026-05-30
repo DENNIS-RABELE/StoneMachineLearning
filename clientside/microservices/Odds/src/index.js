@@ -57,7 +57,7 @@ const characterPool = new Pool({
     process.env.DB_PASSWORD ||
     process.env.GAME_DB_PASS ||
     process.env.GAME_DB_PASSWORD ||
-    "123456",
+    "Software",
   port: Number(process.env.DB_PORT || process.env.GAME_DB_PORT || 5432),
   // Memory & connection optimizations
   max: 3,
@@ -75,7 +75,7 @@ const oddsPool = new Pool({
     process.env.ODDS_DB_PASSWORD ||
     process.env.DB_PASS ||
     process.env.DB_PASSWORD ||
-    "123456",
+    "Software",
   port: Number(process.env.ODDS_DB_PORT || process.env.DB_PORT || 5432),
   // Memory & connection optimizations
   max: 3,

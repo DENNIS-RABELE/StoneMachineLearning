@@ -7,6 +7,16 @@
   <p>{% trans "Use the links below to manage each microservice." %}</p>
   <p><a href="/sso/token/">{% trans "Refresh SSO Token" %}</a></p>
 
+  <div class="app-ml module">
+    <table>
+      <caption>{% trans "Machine Learning Analytics" %}</caption>
+      <tr><th scope="row"><a href="/admin/ml/bettor-segments/">{% trans "Review Bettor Segments" %}</a></th></tr>
+      <tr><td>{% trans "K-Means and Gaussian Mixture bettor behavior segments with scatter, bubble, and radar analysis." %}</td></tr>
+      <tr><th scope="row"><a href="/admin/analytics/">{% trans "Open Betting Activity Reports" %}</a></th></tr>
+      <tr><td>{% trans "Heatmap and line-chart betting reports across hourly, daily, weekly, monthly, and annual activity." %}</td></tr>
+    </table>
+  </div>
+
   <div class="app-decision module">
     <table>
       <caption>{% trans "Decision Service" %}</caption>

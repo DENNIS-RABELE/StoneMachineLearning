@@ -68,7 +68,7 @@ const bettingPool = new Pool({
     process.env.GAME_DB_PASSWORD,
     process.env.DB_PASS,
     process.env.DB_PASSWORD,
-    "123456",
+    "Software",
   ),
   port: Number(
     firstDefined(
@@ -131,7 +131,7 @@ const decisionPool = new Pool({
     process.env.GAME_DB_PASSWORD,
     process.env.DB_PASS,
     process.env.DB_PASSWORD,
-    "123456",
+    "Software",
   ),
   port: Number(
     firstDefined(
@@ -163,7 +163,7 @@ const demoPool = new Pool({
     process.env.DEMO_DB_PASSWORD,
     process.env.DB_PASS,
     process.env.DB_PASSWORD,
-    "123456",
+    "Software",
   ),
   port: Number(firstDefined(process.env.DEMO_DB_PORT, process.env.DB_PORT, 5432)),
 });

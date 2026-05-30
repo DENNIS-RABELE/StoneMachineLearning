@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Bettors, DemoMoney
+from .models import BettorActivityEvent, Bettors, DemoMoney
 
 # Register your models here.
 
@@ -26,4 +26,13 @@ class DemoMoneyAdmin(admin.ModelAdmin):
     list_filter = ("created_at",)
     search_fields = ("user_id",)
     ordering = ("-updated_at",)
+
+
+@admin.register(BettorActivityEvent)
+class BettorActivityEventAdmin(admin.ModelAdmin):
+    list_display = ("id", "bettor_id", "event_type", "created_at")
+    list_filter = ("event_type", "created_at")
+    search_fields = ("bettor_id", "event_type")
+    readonly_fields = ("bettor_id", "event_type", "metadata", "created_at")
+    ordering = ("-created_at",)
 

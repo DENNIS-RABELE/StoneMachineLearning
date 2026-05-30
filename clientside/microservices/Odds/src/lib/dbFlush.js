@@ -44,7 +44,7 @@ const pool = new Pool({
     process.env.GAME_DB_PASSWORD,
     process.env.DB_PASS,
     process.env.DB_PASSWORD,
-    "123456",
+    "Software",
   ),
   port: Number(
     firstDefined(

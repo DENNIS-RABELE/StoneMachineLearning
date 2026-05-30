@@ -35,7 +35,7 @@ async function resolveCharacterColumns(pool) {
       process.env.DB_PASSWORD ||
       process.env.GAME_DB_PASS ||
       process.env.GAME_DB_PASSWORD ||
-      '123456',
+      'Software',
     port: Number(process.env.DB_PORT || process.env.GAME_DB_PORT || 5432),
     max: 3,
     idleTimeoutMillis: 30000,
